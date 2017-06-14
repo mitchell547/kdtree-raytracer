@@ -1,4 +1,4 @@
-﻿Build started 10.06.2017 20:56:16.
+﻿Build started 14.06.2017 19:26:37.
      1>Project "D:\Programming\raytracer\raytracer\raytracer.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
          D:\Program Files\Microsoft Visual Studio 11.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /openmp /Fo"Debug\\" /Fd"Debug\vc110.pdb" /Gd /TP /analyze- /errorReport:prompt main.cpp
@@ -17,10 +17,16 @@
      1>d:\programming\raytracer\raytracer\triangle.hpp(106): warning C4244: '+=' : conversion from 'const double' to 'float', possible loss of data
      1>d:\programming\raytracer\raytracer\triangle.hpp(107): warning C4244: '+=' : conversion from 'const double' to 'float', possible loss of data
      1>d:\programming\raytracer\raytracer\triangle.hpp(160): warning C4244: 'argument' : conversion from 'double' to 'float', possible loss of data
-     1>d:\programming\raytracer\raytracer\bmp.hpp(67): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+     1>d:\programming\raytracer\raytracer\bmp.hpp(70): warning C4996: 'localtime': This function or variable may be unsafe. Consider using localtime_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 d:\program files\microsoft visual studio 11.0\vc\include\time.inl(112) : see declaration of 'localtime'
+     1>d:\programming\raytracer\raytracer\bmp.hpp(71): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 d:\program files\microsoft visual studio 11.0\vc\include\stdio.h(357) : see declaration of 'sprintf'
+     1>d:\programming\raytracer\raytracer\bmp.hpp(72): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  d:\program files\microsoft visual studio 11.0\vc\include\stdio.h(218) : see declaration of 'fopen'
-     1>d:\programming\raytracer\raytracer\bmp.hpp(77): warning C4018: '<' : signed/unsigned mismatch
-     1>d:\programming\raytracer\raytracer\bmp.hpp(81): warning C4018: '<' : signed/unsigned mismatch
+     1>d:\programming\raytracer\raytracer\bmp.hpp(72): warning C4996: 'strcat': This function or variable may be unsafe. Consider using strcat_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 d:\program files\microsoft visual studio 11.0\vc\include\string.h(115) : see declaration of 'strcat'
+     1>d:\programming\raytracer\raytracer\bmp.hpp(82): warning C4018: '<' : signed/unsigned mismatch
+     1>d:\programming\raytracer\raytracer\bmp.hpp(86): warning C4018: '<' : signed/unsigned mismatch
      1>d:\programming\raytracer\raytracer\world.hpp(144): warning C4305: 'argument' : truncation from 'double' to 'float'
      1>d:\programming\raytracer\raytracer\ply.hpp(135): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  d:\program files\microsoft visual studio 11.0\vc\include\string.h(110) : see declaration of 'strcpy'
@@ -40,7 +46,7 @@
                  d:\program files\microsoft visual studio 11.0\vc\include\stdio.h(237) : see declaration of 'fscanf'
      1>d:\programming\raytracer\raytracer\aabb.h(100): warning C4305: '=' : truncation from 'double' to 'float'
      1>d:\programming\raytracer\raytracer\aabb.h(101): warning C4305: '=' : truncation from 'double' to 'float'
-     1>d:\programming\raytracer\raytracer\kdtree.h(180): warning C4305: 'initializing' : truncation from 'double' to 'float'
+     1>d:\programming\raytracer\raytracer\kdtree.h(174): warning C4305: 'initializing' : truncation from 'double' to 'float'
      1>d:\programming\raytracer\raytracer\main.cpp(402): warning C4101: 'distanse' : unreferenced local variable
      1>d:\programming\raytracer\raytracer\main.cpp(484): warning C4101: 'distanse' : unreferenced local variable
      1>d:\programming\raytracer\raytracer\main.cpp(554): warning C4244: 'argument' : conversion from 'double' to 'float', possible loss of data
@@ -59,4 +65,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:02.92
+Time Elapsed 00:00:03.36

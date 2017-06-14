@@ -23,7 +23,7 @@
 #define sampleInCenter
 //#define filter
 
-#define kdtrace
+//#define kdtrace
 
 #include "kdtree.h"
 
@@ -338,9 +338,9 @@ Returns true if input ray intersect some object
 
 
 inline   void intersect (const triangle * objects, const unsigned int objCount,
-	const Ray &r, double &t, int &id, Vec & hit, bool * isIntersect)
+	const Ray &r, double &t, int &id, float3 & hit, bool * isIntersect)
 {
-	Vec lockalHit;
+	float3 localHit;
 	double  d; 
 	t = INF;
 	for (unsigned int i = objCount; i--;)
@@ -348,15 +348,15 @@ inline   void intersect (const triangle * objects, const unsigned int objCount,
 		//bool isSpherIntersection = objects[i].intersectSpher (r);
 		//if (isSpherIntersection)
 		{
-			bool isIntersection = objects[i].intersect (r, float3(lockalHit)); // ! mixing Vec and float3 
+			bool isIntersection = objects[i].intersect (r, localHit); 
 			if (isIntersection)
 			{
-				d = lockalHit.distance (Vec(r.o)); // ! mixing Vec and float3 
+				d = localHit.distance (r.o); 
 				if (d < t)
 				{
 					t = d;
 					id = i;
-					hit = lockalHit;
+					hit = localHit;
 				}
 			}
 		}
@@ -365,7 +365,7 @@ inline   void intersect (const triangle * objects, const unsigned int objCount,
 }
 
 inline   bool intersectHelper (const triangle * objects, const unsigned int objCount,
-	const Ray &r, double &t, int &id, Vec & hit)
+	const Ray &r, double &t, int &id, float3 & hit)
 {
 	bool  isIntersect = 0;
 	intersect (objects, objCount, r, t, id, hit, &isIntersect);
@@ -374,11 +374,11 @@ inline   bool intersectHelper (const triangle * objects, const unsigned int objC
 /*
 Returns true if the light source is visible
 */
-// For usual raytracing
+// For standard raytracing
 inline   bool Visible (const  world & wrld, const Vec & hit, const Vec & light, const int & id)
 {
 	double distToLight = hit.distance (light);
-	Vec hit1;
+	float3 hit1;
 	Vec sub = light - hit;
 	Ray r (hit, sub);
 	double distanse;
@@ -439,7 +439,7 @@ Recursively trace the input ray with a light source and reflection
 Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
 	Vec color (0, 0, 0);
 	int id = 0;
-	Vec hit;// найдем полигон
+	float3 hit;// найдем полигон
 	double distanse ;
 
 	bool isIntersection = intersectHelper (wrld.objects, wrld.objCount, ray, distanse, id, hit);
@@ -456,7 +456,7 @@ Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
 		bool isVisible = Visible (wrld, hit, wrld.lights[i], id);
 		if (isVisible)
 		{
-			Vec light = wrld.lights[i] - hit;
+			float3 light = wrld.lights[i] - hit;
 			double distancei = wrld.lights[i].distance (hit);
 			double cos = abs ((light.dot (tr.normal ().normalization ())) / (distancei));
 			color = color + color*(1 / (distancei*distancei));
@@ -496,7 +496,7 @@ Vec KDTreeRayTrace (const  KDNode &root, const  world  & wrld, const Ray & ray,u
 		bool isVisible = Visible (root, wrld, hit, wrld.lights[i], *tr);
 		if (isVisible)
 		{
-			Vec light = wrld.lights[i] - hit;
+			float3 light = wrld.lights[i] - hit;
 			double distancei = wrld.lights[i].distance (hit);
 			double cos = abs ((light.dot(tr->normal().normalization())) / (distancei));
 			color = color + color*(1 / (distancei*distancei));
@@ -672,6 +672,7 @@ void SimpleRender (const  KDNode &root, const  world & wrld, const camera & cam,
 int main (int argc, char *argv[])
 {
 	//int w = 1024, h = 768;
+	//int w = 640, h = 480;
 	int w = 320, h = 240;
 	int samps = argc == 2 ? atoi (argv[1]) / 4 : 1; // # samples 
 	
@@ -690,7 +691,7 @@ int main (int argc, char *argv[])
 	
 	KDNode scene;
 	double build_s = omp_get_wtime();
-	buildKDTree(scene, wrld.objects, wrld.objCount,8);
+	buildKDTree(scene, wrld.objects, wrld.objCount,3);
 	double build_f = omp_get_wtime();
 	fprintf (stderr, "\rtime %5.3f\n", build_f-build_s);
 	*/
@@ -702,7 +703,7 @@ int main (int argc, char *argv[])
 	world wrld = world (objCount, lightsCount, obj, lights);
 	
 	KDNode scene;
-	buildKDTree(scene, obj, objCount, 4);
+	buildKDTree(scene, obj, objCount, 0);
 	
 	// // One triangle
 	/*

@@ -1,6 +1,7 @@
 #include "Vec.hpp"
 #include <math.h>
 #include <stdio.h>
+#include <ctime>
 #include "raytracer_misc.h"
 
 #pragma pack (push)
@@ -64,7 +65,11 @@ inline void writeToPpm (Vec *c, const unsigned  int w, const unsigned int h)
 void writeToBmp (Vec *c, const unsigned  int w, const unsigned int h)
 {
 	bmpinfo first (w, h);
-	FILE *f = fopen ("temp1.bmp", "wb");  // 
+	char filename [30];
+	time_t t = time(NULL);
+	struct tm tm = *localtime(&t);
+	sprintf(filename, "%.2d%.2d%.2d_%.2d%.2d", tm.tm_year-100, tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min);
+	FILE *f = fopen(strcat(filename, ".bmp"), "wb");  // 
 	if (f == NULL)
 	{
 		printf("Cannot open output file\n");

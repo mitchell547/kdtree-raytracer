@@ -44,13 +44,6 @@ KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth) 
 	if (tri_cnt == 0) 
 		return &root;
 
-	if (depth == 0) {
-		copy_triangles(root, triangles, tri_cnt);
-		return &root;
-	}
-
-	root.tris_cnt = 0;
-
 	// Ищем ограничивающий бокс всей сцены и заодно центры треугольников
 	float3 * mid_points = new float3[tri_cnt];	// "центры" треугольников
 	AABB global_box = getTriangleAABB(triangles[0]); // бокс сцены
@@ -61,6 +54,14 @@ KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth) 
 		mid_points[i] = (box.max + box.min) / 2.0;
 	}
 
+	root.box = global_box;
+
+	if (depth == 0) {
+		copy_triangles(root, triangles, tri_cnt);
+		return &root;
+	}
+
+	root.tris_cnt = 0;
 	// // Ищем оптимальное пересечение
 
 	// Берём наибольшую длину бокса в качестве проверяемой оси
@@ -118,7 +119,6 @@ KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth) 
 
 	delete[] bins_sizes;
 	
-	root.box = global_box;
 	root.split_axis = split_axis;
 	root.split_coord = global_box.min.v[split_axis] + step * (split_plane + 1);
 
@@ -171,31 +171,39 @@ triangle* traceKDTree(const KDNode &root, const Ray &ray, float3 &pHit) {
 	const KDNode * node; // Текущий узел
 	node = &root;
 
+	float min_dist = INF;
+	const KDNode * hit_node = node;
+	int id;
 	// Трассируем, пока не достигнем результата
 	while (true) {
 
 		// Листовой узел
 		while (node->left == nullptr && node->right == nullptr) {
-			float3 hit;
-			float min_dist = INF;
-			int id;
+			float3 hit;		
+			
 			for (int i = 0; i < node->tris_cnt; ++i) {
 				if (node->triangles[i].intersect(ray, hit)) {
 					float dist = hit.distance(ray.o);
 					if (dist < min_dist) {
 						min_dist = dist;
 						id = i;
+						hit_node = node;
 						pHit = hit;
 					}
 				}
 			}
 
-			// Возвращаем найденное пересечение, либо возвращаемся к стеку и трассируем дальше
-			if (min_dist < INF)
-				return &node->triangles[id];
-			else {
-				if (s.empty())
+			if (s.empty()) {
+				if (min_dist <= INF)
+					return &hit_node->triangles[id];
+				else
 					return nullptr;
+			}
+			// Возвращаем найденное пересечение, либо возвращаемся к стеку и трассируем дальше
+			//if (min_dist <= INF)
+			//	return &hit_node->triangles[id];
+			//else {
+			{
 
 				tmin = tmax;
 				TraceInfo ti;
@@ -209,20 +217,23 @@ triangle* traceKDTree(const KDNode &root, const Ray &ray, float3 &pHit) {
 		tsplit = raySplitIntersect(ray, node->split_axis, node->split_coord);
 
 		if(tsplit <= tmin) {
-			node = node->right;
+			node = node->left;
 		}
 		else if(tsplit >= tmax) {
-			node = node->left;
+			node = node->right;
 		}
 		else {
 			TraceInfo ti;
-			ti.node = node->right;
+			ti.node = node->left;
 			ti.tmax = tmax;
 			s.push(ti);
-			node = node->left;
+			node = node->right;
 			tmax = tsplit;
 		}
 	}
 
-	return nullptr;
+	if (min_dist < INF)
+		return &hit_node->triangles[id];
+	else
+		return nullptr;
 }
