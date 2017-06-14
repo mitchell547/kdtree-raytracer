@@ -2,7 +2,7 @@
 #include "Ray.hpp"
 #include "float3.h"
 #pragma once
-#define EPSILON 0.000000001
+#define EPSILON 0.000001
 
 struct triangle
 {
@@ -145,6 +145,34 @@ struct triangle
 			return true;
 		}
 		//
+	}
+
+	
+
+	inline bool mollerTrumboreIntersect(const Ray &r, float3 & hit) const {
+		float3 tuv = float3();
+		float3 p0p1 = float3(p[1] - p[0]);
+		float3 p0p2 = float3(p[2] - p[0]);
+		float3 pvec = r.d.cross(p0p2);
+		float det = p0p1.dot(pvec);
+
+		if (fabs(det) < EPSILON) return false;
+
+		float invDet = 1 / det;
+		float3 tvec = r.o - p[0];
+
+		tuv.v[1] = tvec.dot(pvec) * invDet;
+		if (tuv.v[1] < 0 || tuv.v[1] > 1) return false;
+
+		float3 qvec = tvec.cross(p0p1);
+		tuv.v[2] = r.d.dot(qvec) * invDet;
+		if (tuv.v[2] < 0 || tuv.v[1] + tuv.v[2] > 1) return false;
+
+		hit = p[0] + tuv.v[1] * p0p1 + tuv.v[2] * p0p2;
+
+		//tuv.v[0] = p0p2.dot(qvec) * invDet; // distance from ray origin to intersection point
+
+		return true;
 	}
 
 	#ifndef  baricentTest

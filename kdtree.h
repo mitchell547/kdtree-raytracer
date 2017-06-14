@@ -182,7 +182,8 @@ triangle* traceKDTree(const KDNode &root, const Ray &ray, float3 &pHit) {
 			float3 hit;		
 			
 			for (int i = 0; i < node->tris_cnt; ++i) {
-				if (node->triangles[i].intersect(ray, hit)) {
+				//if (node->triangles[i].intersect(ray, hit)) {
+				if (node->triangles[i].mollerTrumboreIntersect(ray, hit)) {
 					float dist = hit.distance(ray.o);
 					if (dist < min_dist) {
 						min_dist = dist;

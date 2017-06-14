@@ -23,7 +23,7 @@
 #define sampleInCenter
 //#define filter
 
-//#define kdtrace
+#define kdtrace
 
 #include "kdtree.h"
 
@@ -348,7 +348,9 @@ inline   void intersect (const triangle * objects, const unsigned int objCount,
 		//bool isSpherIntersection = objects[i].intersectSpher (r);
 		//if (isSpherIntersection)
 		{
-			bool isIntersection = objects[i].intersect (r, localHit); 
+			//bool isIntersection = objects[i].intersect (r, localHit); 
+			bool isIntersection = objects[i].mollerTrumboreIntersect(r, localHit); 
+			
 			if (isIntersection)
 			{
 				d = localHit.distance (r.o); 
@@ -680,7 +682,7 @@ int main (int argc, char *argv[])
 	imgSettings img = imgSettings (w, h, samps);
 
 	// // Rabbit
-	/*Model_PLY rabbit;
+	Model_PLY rabbit;
 	rabbit.Load ("bun_zipper_res4.ply");
 	//camera cam (Ray (Vec (85, 55, 170), Vec (-0.45, -0.04, -1).normalization ()), Vec (w*.5135 / h));
 	camera cam (Ray (Vec (0, 70, 220), Vec (0, -0.25, -1).normalization ()), Vec (w*.5135 / h,0,0));
@@ -691,20 +693,20 @@ int main (int argc, char *argv[])
 	
 	KDNode scene;
 	double build_s = omp_get_wtime();
-	buildKDTree(scene, wrld.objects, wrld.objCount,3);
+	buildKDTree(scene, wrld.objects, wrld.objCount,2);
 	double build_f = omp_get_wtime();
 	fprintf (stderr, "\rtime %5.3f\n", build_f-build_s);
-	*/
+	
 
 	// // Cube
-	int objCount = sizeof(obj) / sizeof(triangle);
+	/*int objCount = sizeof(obj) / sizeof(triangle);
 	int lightsCount = sizeof(lights) / sizeof(Vec);
 	camera cam (Ray (Vec (140, 45, 170), Vec (-0.7, -0.15, -1).normalization ()), Vec (w*.5135 / h));
 	world wrld = world (objCount, lightsCount, obj, lights);
 	
 	KDNode scene;
 	buildKDTree(scene, obj, objCount, 0);
-	
+	*/
 	// // One triangle
 	/*
 	camera cam (Ray (Vec (105, 44, 190), Vec (0, 1, -0.2).normalization ()), Vec (w*.5135 / h));
