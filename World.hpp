@@ -7,18 +7,18 @@
 struct world
 {
 	triangle*objects;
-	Vec	*lights;
+	float3	*lights;
 	unsigned int objCount;
 	unsigned int lightsCount;
 
 	world ();
 	world (const unsigned int objCount_, const unsigned int lightsCount_,
-		const triangle*objects_, const Vec	*lights_) :
+		const triangle*objects_, const float3	*lights_) :
 		objCount (objCount_),
 		lightsCount (lightsCount_)
 	{
 		objects = (triangle *)malloc (objCount_*sizeof(triangle));
-		lights = (Vec *)malloc (lightsCount_*sizeof(Vec));
+		lights = (float3 *)malloc (lightsCount_*sizeof(float3));
 		for (unsigned int i = 0; i < objCount; ++i)
 			objects[i] = objects_[i];
 		for (unsigned int i = 0; i < lightsCount; ++i)

@@ -27,307 +27,254 @@
 
 #include "kdtree.h"
 
-/*struct camera {
-	Ray cameraLocation;
-	Vec cameraXangle;
-	Vec cameraYangle;
-	camera (Ray cameraLocation_, Vec cameraXangle_) :
-		cameraLocation (cameraLocation_),
-		cameraXangle (cameraXangle_) 
-	{
-		cameraYangle = (cameraXangle_.cross (cameraLocation_.d)).normalization ()*.5135;
-	}
-};
-*/
-/*
-struct imgSettings {
-	unsigned int w;//width
-	unsigned int h;//hight
-	unsigned int samps;//sampels per pixel
-	imgSettings (unsigned int w_, unsigned int h_, unsigned int samps_) :w (w_), h (h_), samps (samps_){}
-};
-*/
-/*
-struct world {
-	triangle*objects;
-	Vec	*lights;
-	unsigned int objCount;
-	unsigned int lightsCount;
-	world ();
-	world (const unsigned int objCount_, const unsigned int lightsCount_,
-		const triangle*objects_, const Vec	*lights_) :
-		objCount (objCount_),
-		lightsCount (lightsCount_)
-	{
-		objects = (triangle *)malloc (objCount_*sizeof(triangle));
-		lights = (Vec *)malloc (lightsCount_*sizeof(Vec));
-		for (unsigned int i = 0; i < objCount; ++i)
-			objects[i] = objects_[i];
-		for (unsigned int i = 0; i < lightsCount; ++i)
-			lights[i] = lights_[i];
-	}
-
-	void setObj (const triangle*objects_, const unsigned int objCount_)
-	{
-		objCount = objCount_;
-		objects = (triangle *)malloc (objCount_*sizeof(triangle));
-		for (unsigned int i = 0; i < objCount; ++i)
-			objects[i] = objects_[i];
-	}
-};
-*/
-
- //world CUDA_WORLD();
-//triangle * CUDA_objects;
-//enum Refl_t { DIFF, SPEC, REFR };  // material types, used in distanceiance() 
 
 
-Vec lights[] = { Vec (7, 70, 25),
-				Vec (60, 7, 7) };
+float3 lights[] = { float3 (7, 70, 25),
+				float3 (60, 7, 7) };
 triangle obj[] = {
-	triangle (Vec (37, 25, -4), Vec (39, 25, -4), Vec (39, 27, -4), Vec (.0, .0, .50), 0),//back
+	triangle (float3 (37, 25, -4), float3 (39, 25, -4), float3 (39, 27, -4), float3 (.0, .0, .50), 0),//back
 
-	triangle (Vec (5, 5, 5), Vec (6, 5, 5), Vec (6, 6, 5), Vec (0.6, 0.6, 0.6), 0.91),
-	triangle (Vec (6, 5, 5), Vec (7, 5, 5), Vec (7, 6, 5), Vec (0.6, 0.6, 0.6), 0.92),
-	triangle (Vec (7, 5, 5), Vec (8, 5, 5), Vec (8, 6, 5), Vec (0.6, 0.6, 0.6), 0.93),
-	triangle (Vec (8, 5, 5), Vec (9, 5, 5), Vec (9, 6, 5), Vec (0.6, 0.6, 0.6), 0.94),
-	triangle (Vec (9, 5, 5), Vec (10, 5, 5), Vec (10, 6, 5), Vec (0.6, 0.6, 0.6), 0.95),
-	triangle (Vec (10, 5, 5), Vec (11, 5, 5), Vec (11, 6, 5), Vec (0.6, 0.6, 0.6), 0.96),
-	triangle (Vec (11, 5, 5), Vec (12, 5, 5), Vec (12, 6, 5), Vec (0.6, 0.6, 0.6), 0.97),
-	triangle (Vec (12, 5, 5), Vec (13, 5, 5), Vec (13, 6, 5), Vec (0.6, 0.6, 0.6), 0.98),
-	triangle (Vec (13, 5, 5), Vec (14, 5, 5), Vec (14, 6, 5), Vec (0.6, 0.6, 0.6), 0.99),
-	triangle (Vec (14, 5, 5), Vec (15, 5, 5), Vec (15, 6, 5), Vec (0.6, 0.6, 0.6), 0.90),
+	triangle (float3 (5, 5, 5), float3 (6, 5, 5), float3 (6, 6, 5), float3 (0.6, 0.6, 0.6), 0.91),
+	triangle (float3 (6, 5, 5), float3 (7, 5, 5), float3 (7, 6, 5), float3 (0.6, 0.6, 0.6), 0.92),
+	triangle (float3 (7, 5, 5), float3 (8, 5, 5), float3 (8, 6, 5), float3 (0.6, 0.6, 0.6), 0.93),
+	triangle (float3 (8, 5, 5), float3 (9, 5, 5), float3 (9, 6, 5), float3 (0.6, 0.6, 0.6), 0.94),
+	triangle (float3 (9, 5, 5), float3 (10, 5, 5), float3 (10, 6, 5), float3 (0.6, 0.6, 0.6), 0.95),
+	triangle (float3 (10, 5, 5), float3 (11, 5, 5), float3 (11, 6, 5), float3 (0.6, 0.6, 0.6), 0.96),
+	triangle (float3 (11, 5, 5), float3 (12, 5, 5), float3 (12, 6, 5), float3 (0.6, 0.6, 0.6), 0.97),
+	triangle (float3 (12, 5, 5), float3 (13, 5, 5), float3 (13, 6, 5), float3 (0.6, 0.6, 0.6), 0.98),
+	triangle (float3 (13, 5, 5), float3 (14, 5, 5), float3 (14, 6, 5), float3 (0.6, 0.6, 0.6), 0.99),
+	triangle (float3 (14, 5, 5), float3 (15, 5, 5), float3 (15, 6, 5), float3 (0.6, 0.6, 0.6), 0.90),
 
-	triangle (Vec (6, 5, 5), Vec (6, 6, 5), Vec (7, 6, 5), Vec (0.6, 0.6, 0.6), 0.89),
-	triangle (Vec (7, 5, 5), Vec (7, 6, 5), Vec (8, 6, 5), Vec (0.6, 0.6, 0.6), 0.88),
-	triangle (Vec (8, 5, 5), Vec (8, 6, 5), Vec (9, 6, 5), Vec (0.6, 0.6, 0.6), 0.87),
-	triangle (Vec (9, 5, 5), Vec (9, 6, 5), Vec (10, 6, 5), Vec (0.6, 0.6, 0.6), 0.86),
-	triangle (Vec (10, 5, 5), Vec (10, 6, 5), Vec (11, 6, 5), Vec (0.6, 0.6, 0.6), 0.85),
-	triangle (Vec (11, 5, 5), Vec (11, 6, 5), Vec (12, 6, 5), Vec (0.6, 0.6, 0.6), 0.84),
-	triangle (Vec (12, 5, 5), Vec (12, 6, 5), Vec (13, 6, 5), Vec (0.6, 0.6, 0.6), 0.83),
-	triangle (Vec (13, 5, 5), Vec (13, 6, 5), Vec (14, 6, 5), Vec (0.6, 0.6, 0.6), 0.82),
-	triangle (Vec (14, 5, 5), Vec (14, 6, 5), Vec (15, 6, 5), Vec (0.6, 0.6, 0.6), 0.81),
+	triangle (float3 (6, 5, 5), float3 (6, 6, 5), float3 (7, 6, 5), float3 (0.6, 0.6, 0.6), 0.89),
+	triangle (float3 (7, 5, 5), float3 (7, 6, 5), float3 (8, 6, 5), float3 (0.6, 0.6, 0.6), 0.88),
+	triangle (float3 (8, 5, 5), float3 (8, 6, 5), float3 (9, 6, 5), float3 (0.6, 0.6, 0.6), 0.87),
+	triangle (float3 (9, 5, 5), float3 (9, 6, 5), float3 (10, 6, 5), float3 (0.6, 0.6, 0.6), 0.86),
+	triangle (float3 (10, 5, 5), float3 (10, 6, 5), float3 (11, 6, 5), float3 (0.6, 0.6, 0.6), 0.85),
+	triangle (float3 (11, 5, 5), float3 (11, 6, 5), float3 (12, 6, 5), float3 (0.6, 0.6, 0.6), 0.84),
+	triangle (float3 (12, 5, 5), float3 (12, 6, 5), float3 (13, 6, 5), float3 (0.6, 0.6, 0.6), 0.83),
+	triangle (float3 (13, 5, 5), float3 (13, 6, 5), float3 (14, 6, 5), float3 (0.6, 0.6, 0.6), 0.82),
+	triangle (float3 (14, 5, 5), float3 (14, 6, 5), float3 (15, 6, 5), float3 (0.6, 0.6, 0.6), 0.81),
 
-	triangle (Vec (6, 6, 5), Vec (7, 6, 5), Vec (7, 7, 5), Vec (0.6, 0.6, 0.6), 0.89),
-	triangle (Vec (7, 6, 5), Vec (8, 6, 5), Vec (8, 7, 5), Vec (0.6, 0.6, 0.6), 0.88),
-	triangle (Vec (8, 6, 5), Vec (9, 6, 5), Vec (9, 7, 5), Vec (0.6, 0.6, 0.6), 0.87),
-	triangle (Vec (9, 6, 5), Vec (10, 6, 5), Vec (10, 7, 5), Vec (0.6, 0.6, 0.6), 0.86),
-	triangle (Vec (10, 6, 5), Vec (11, 6, 5), Vec (11, 7, 5), Vec (0.6, 0.6, 0.6), 0.85),
-	triangle (Vec (11, 6, 5), Vec (12, 6, 5), Vec (12, 7, 5), Vec (0.6, 0.6, 0.6), 0.84),
-	triangle (Vec (12, 6, 5), Vec (13, 6, 5), Vec (13, 7, 5), Vec (0.6, 0.6, 0.6), 0.83),
-	triangle (Vec (13, 6, 5), Vec (14, 6, 5), Vec (14, 7, 5), Vec (0.6, 0.6, 0.6), 0.82),
-	triangle (Vec (14, 6, 5), Vec (15, 6, 5), Vec (15, 7, 5), Vec (0.6, 0.6, 0.6), 0.81),
+	triangle (float3 (6, 6, 5), float3 (7, 6, 5), float3 (7, 7, 5), float3 (0.6, 0.6, 0.6), 0.89),
+	triangle (float3 (7, 6, 5), float3 (8, 6, 5), float3 (8, 7, 5), float3 (0.6, 0.6, 0.6), 0.88),
+	triangle (float3 (8, 6, 5), float3 (9, 6, 5), float3 (9, 7, 5), float3 (0.6, 0.6, 0.6), 0.87),
+	triangle (float3 (9, 6, 5), float3 (10, 6, 5), float3 (10, 7, 5), float3 (0.6, 0.6, 0.6), 0.86),
+	triangle (float3 (10, 6, 5), float3 (11, 6, 5), float3 (11, 7, 5), float3 (0.6, 0.6, 0.6), 0.85),
+	triangle (float3 (11, 6, 5), float3 (12, 6, 5), float3 (12, 7, 5), float3 (0.6, 0.6, 0.6), 0.84),
+	triangle (float3 (12, 6, 5), float3 (13, 6, 5), float3 (13, 7, 5), float3 (0.6, 0.6, 0.6), 0.83),
+	triangle (float3 (13, 6, 5), float3 (14, 6, 5), float3 (14, 7, 5), float3 (0.6, 0.6, 0.6), 0.82),
+	triangle (float3 (14, 6, 5), float3 (15, 6, 5), float3 (15, 7, 5), float3 (0.6, 0.6, 0.6), 0.81),
 
-	triangle (Vec (7, 6, 5), Vec (7, 7, 5), Vec (8, 7, 5), Vec (0.6, 0.6, 0.6), 0.79),
-	triangle (Vec (8, 6, 5), Vec (8, 7, 5), Vec (9, 7, 5), Vec (0.6, 0.6, 0.6), 0.78),
-	triangle (Vec (9, 6, 5), Vec (9, 7, 5), Vec (10, 7, 5), Vec (0.6, 0.6, 0.6), 0.76),
-	triangle (Vec (10, 6, 5), Vec (10, 7, 5), Vec (11, 7, 5), Vec (0.6, 0.6, 0.6), 0.75),
-	triangle (Vec (11, 6, 5), Vec (11, 7, 5), Vec (12, 7, 5), Vec (0.6, 0.6, 0.6), 0.74),
-	triangle (Vec (12, 6, 5), Vec (12, 7, 5), Vec (13, 7, 5), Vec (0.6, 0.6, 0.6), 0.73),
-	triangle (Vec (13, 6, 5), Vec (13, 7, 5), Vec (14, 7, 5), Vec (0.6, 0.6, 0.6), 0.72),
-	triangle (Vec (14, 6, 5), Vec (14, 7, 5), Vec (15, 7, 5), Vec (0.6, 0.6, 0.6), 0.71),
+	triangle (float3 (7, 6, 5), float3 (7, 7, 5), float3 (8, 7, 5), float3 (0.6, 0.6, 0.6), 0.79),
+	triangle (float3 (8, 6, 5), float3 (8, 7, 5), float3 (9, 7, 5), float3 (0.6, 0.6, 0.6), 0.78),
+	triangle (float3 (9, 6, 5), float3 (9, 7, 5), float3 (10, 7, 5), float3 (0.6, 0.6, 0.6), 0.76),
+	triangle (float3 (10, 6, 5), float3 (10, 7, 5), float3 (11, 7, 5), float3 (0.6, 0.6, 0.6), 0.75),
+	triangle (float3 (11, 6, 5), float3 (11, 7, 5), float3 (12, 7, 5), float3 (0.6, 0.6, 0.6), 0.74),
+	triangle (float3 (12, 6, 5), float3 (12, 7, 5), float3 (13, 7, 5), float3 (0.6, 0.6, 0.6), 0.73),
+	triangle (float3 (13, 6, 5), float3 (13, 7, 5), float3 (14, 7, 5), float3 (0.6, 0.6, 0.6), 0.72),
+	triangle (float3 (14, 6, 5), float3 (14, 7, 5), float3 (15, 7, 5), float3 (0.6, 0.6, 0.6), 0.71),
 
-	triangle (Vec (7, 7, 5), Vec (8, 7, 5), Vec (8, 8, 5), Vec (0.6, 0.6, 0.6), 0.79),
-	triangle (Vec (8, 7, 5), Vec (9, 7, 5), Vec (9, 8, 5), Vec (0.6, 0.6, 0.6), 0.78),
-	triangle (Vec (9, 7, 5), Vec (10, 7, 5), Vec (10, 8, 5), Vec (0.6, 0.6, 0.6), 0.76),
-	triangle (Vec (10, 7, 5), Vec (11, 7, 5), Vec (11, 8, 5), Vec (0.6, 0.6, 0.6), 0.75),
-	triangle (Vec (11, 7, 5), Vec (12, 7, 5), Vec (12, 8, 5), Vec (0.6, 0.6, 0.6), 0.74),
-	triangle (Vec (12, 7, 5), Vec (13, 7, 5), Vec (13, 8, 5), Vec (0.6, 0.6, 0.6), 0.73),
-	triangle (Vec (13, 7, 5), Vec (14, 7, 5), Vec (14, 8, 5), Vec (0.6, 0.6, 0.6), 0.72),
-	triangle (Vec (14, 7, 5), Vec (15, 7, 5), Vec (15, 8, 5), Vec (0.6, 0.6, 0.6), 0.71),
+	triangle (float3 (7, 7, 5), float3 (8, 7, 5), float3 (8, 8, 5), float3 (0.6, 0.6, 0.6), 0.79),
+	triangle (float3 (8, 7, 5), float3 (9, 7, 5), float3 (9, 8, 5), float3 (0.6, 0.6, 0.6), 0.78),
+	triangle (float3 (9, 7, 5), float3 (10, 7, 5), float3 (10, 8, 5), float3 (0.6, 0.6, 0.6), 0.76),
+	triangle (float3 (10, 7, 5), float3 (11, 7, 5), float3 (11, 8, 5), float3 (0.6, 0.6, 0.6), 0.75),
+	triangle (float3 (11, 7, 5), float3 (12, 7, 5), float3 (12, 8, 5), float3 (0.6, 0.6, 0.6), 0.74),
+	triangle (float3 (12, 7, 5), float3 (13, 7, 5), float3 (13, 8, 5), float3 (0.6, 0.6, 0.6), 0.73),
+	triangle (float3 (13, 7, 5), float3 (14, 7, 5), float3 (14, 8, 5), float3 (0.6, 0.6, 0.6), 0.72),
+	triangle (float3 (14, 7, 5), float3 (15, 7, 5), float3 (15, 8, 5), float3 (0.6, 0.6, 0.6), 0.71),
 
-	triangle (Vec (8, 7, 5), Vec (8, 8, 5), Vec (9, 8, 5), Vec (0.6, 0.6, 0.6), 0.69),
-	triangle (Vec (9, 7, 5), Vec (9, 8, 5), Vec (10, 8, 5), Vec (0.6, 0.6, 0.6), 0.68),
-	triangle (Vec (10, 7, 5), Vec (10, 8, 5), Vec (11, 8, 5), Vec (0.6, 0.6, 0.6), 0.67),
-	triangle (Vec (11, 7, 5), Vec (11, 8, 5), Vec (12, 8, 5), Vec (0.6, 0.6, 0.6), 0.66),
-	triangle (Vec (12, 7, 5), Vec (12, 8, 5), Vec (13, 8, 5), Vec (0.6, 0.6, 0.6), 0.65),
-	triangle (Vec (13, 7, 5), Vec (13, 8, 5), Vec (14, 8, 5), Vec (0.6, 0.6, 0.6), 0.64),
-	triangle (Vec (14, 7, 5), Vec (14, 8, 5), Vec (15, 8, 5), Vec (0.6, 0.6, 0.6), 0.63),
+	triangle (float3 (8, 7, 5), float3 (8, 8, 5), float3 (9, 8, 5), float3 (0.6, 0.6, 0.6), 0.69),
+	triangle (float3 (9, 7, 5), float3 (9, 8, 5), float3 (10, 8, 5), float3 (0.6, 0.6, 0.6), 0.68),
+	triangle (float3 (10, 7, 5), float3 (10, 8, 5), float3 (11, 8, 5), float3 (0.6, 0.6, 0.6), 0.67),
+	triangle (float3 (11, 7, 5), float3 (11, 8, 5), float3 (12, 8, 5), float3 (0.6, 0.6, 0.6), 0.66),
+	triangle (float3 (12, 7, 5), float3 (12, 8, 5), float3 (13, 8, 5), float3 (0.6, 0.6, 0.6), 0.65),
+	triangle (float3 (13, 7, 5), float3 (13, 8, 5), float3 (14, 8, 5), float3 (0.6, 0.6, 0.6), 0.64),
+	triangle (float3 (14, 7, 5), float3 (14, 8, 5), float3 (15, 8, 5), float3 (0.6, 0.6, 0.6), 0.63),
 
-	triangle (Vec (8, 8, 5), Vec (9, 8, 5), Vec (9, 9, 5), Vec (0.6, 0.6, 0.6), 0.69),
-	triangle (Vec (9, 8, 5), Vec (10, 8, 5), Vec (10, 9, 5), Vec (0.6, 0.6, 0.6), 0.68),
-	triangle (Vec (10, 8, 5), Vec (11, 8, 5), Vec (11, 9, 5), Vec (0.6, 0.6, 0.6), 0.67),
-	triangle (Vec (11, 8, 5), Vec (12, 8, 5), Vec (12, 9, 5), Vec (0.6, 0.6, 0.6), 0.66),
-	triangle (Vec (12, 8, 5), Vec (13, 8, 5), Vec (13, 9, 5), Vec (0.6, 0.6, 0.6), 0.65),
-	triangle (Vec (13, 8, 5), Vec (14, 8, 5), Vec (14, 9, 5), Vec (0.6, 0.6, 0.6), 0.64),
-	triangle (Vec (14, 8, 5), Vec (15, 8, 5), Vec (15, 9, 5), Vec (0.6, 0.6, 0.6), 0.63),
+	triangle (float3 (8, 8, 5), float3 (9, 8, 5), float3 (9, 9, 5), float3 (0.6, 0.6, 0.6), 0.69),
+	triangle (float3 (9, 8, 5), float3 (10, 8, 5), float3 (10, 9, 5), float3 (0.6, 0.6, 0.6), 0.68),
+	triangle (float3 (10, 8, 5), float3 (11, 8, 5), float3 (11, 9, 5), float3 (0.6, 0.6, 0.6), 0.67),
+	triangle (float3 (11, 8, 5), float3 (12, 8, 5), float3 (12, 9, 5), float3 (0.6, 0.6, 0.6), 0.66),
+	triangle (float3 (12, 8, 5), float3 (13, 8, 5), float3 (13, 9, 5), float3 (0.6, 0.6, 0.6), 0.65),
+	triangle (float3 (13, 8, 5), float3 (14, 8, 5), float3 (14, 9, 5), float3 (0.6, 0.6, 0.6), 0.64),
+	triangle (float3 (14, 8, 5), float3 (15, 8, 5), float3 (15, 9, 5), float3 (0.6, 0.6, 0.6), 0.63),
 
-	triangle (Vec (9, 8, 5), Vec (9, 9, 5), Vec (10, 9, 5), Vec (0.6, 0.6, 0.6), 0.58),
-	triangle (Vec (10, 8, 5), Vec (10, 9, 5), Vec (11, 9, 5), Vec (0.6, 0.6, 0.6), 0.57),
-	triangle (Vec (11, 8, 5), Vec (11, 9, 5), Vec (12, 9, 5), Vec (0.6, 0.6, 0.6), 0.56),
-	triangle (Vec (12, 8, 5), Vec (12, 9, 5), Vec (13, 9, 5), Vec (0.6, 0.6, 0.6), 0.55),
-	triangle (Vec (13, 8, 5), Vec (13, 9, 5), Vec (14, 9, 5), Vec (0.6, 0.6, 0.6), 0.54),
-	triangle (Vec (14, 8, 5), Vec (14, 9, 5), Vec (15, 9, 5), Vec (0.6, 0.6, 0.6), 0.53),
+	triangle (float3 (9, 8, 5), float3 (9, 9, 5), float3 (10, 9, 5), float3 (0.6, 0.6, 0.6), 0.58),
+	triangle (float3 (10, 8, 5), float3 (10, 9, 5), float3 (11, 9, 5), float3 (0.6, 0.6, 0.6), 0.57),
+	triangle (float3 (11, 8, 5), float3 (11, 9, 5), float3 (12, 9, 5), float3 (0.6, 0.6, 0.6), 0.56),
+	triangle (float3 (12, 8, 5), float3 (12, 9, 5), float3 (13, 9, 5), float3 (0.6, 0.6, 0.6), 0.55),
+	triangle (float3 (13, 8, 5), float3 (13, 9, 5), float3 (14, 9, 5), float3 (0.6, 0.6, 0.6), 0.54),
+	triangle (float3 (14, 8, 5), float3 (14, 9, 5), float3 (15, 9, 5), float3 (0.6, 0.6, 0.6), 0.53),
 
-	triangle (Vec (9, 9, 5), Vec (10, 9, 5), Vec (10, 10, 5), Vec (0.6, 0.6, 0.6), 0.58),
-	triangle (Vec (10, 9, 5), Vec (11, 9, 5), Vec (11, 10, 5), Vec (0.6, 0.6, 0.6), 0.57),
-	triangle (Vec (11, 9, 5), Vec (12, 9, 5), Vec (12, 10, 5), Vec (0.6, 0.6, 0.6), 0.56),
-	triangle (Vec (12, 9, 5), Vec (13, 9, 5), Vec (13, 10, 5), Vec (0.6, 0.6, 0.6), 0.55),
-	triangle (Vec (13, 9, 5), Vec (14, 9, 5), Vec (14, 10, 5), Vec (0.6, 0.6, 0.6), 0.54),
-	triangle (Vec (14, 9, 5), Vec (15, 9, 5), Vec (15, 10, 5), Vec (0.6, 0.6, 0.6), 0.53),
+	triangle (float3 (9, 9, 5), float3 (10, 9, 5), float3 (10, 10, 5), float3 (0.6, 0.6, 0.6), 0.58),
+	triangle (float3 (10, 9, 5), float3 (11, 9, 5), float3 (11, 10, 5), float3 (0.6, 0.6, 0.6), 0.57),
+	triangle (float3 (11, 9, 5), float3 (12, 9, 5), float3 (12, 10, 5), float3 (0.6, 0.6, 0.6), 0.56),
+	triangle (float3 (12, 9, 5), float3 (13, 9, 5), float3 (13, 10, 5), float3 (0.6, 0.6, 0.6), 0.55),
+	triangle (float3 (13, 9, 5), float3 (14, 9, 5), float3 (14, 10, 5), float3 (0.6, 0.6, 0.6), 0.54),
+	triangle (float3 (14, 9, 5), float3 (15, 9, 5), float3 (15, 10, 5), float3 (0.6, 0.6, 0.6), 0.53),
 
-	triangle (Vec (10, 9, 5), Vec (10, 10, 5), Vec (11, 10, 5), Vec (0.6, 0.6, 0.6), 0.46),
-	triangle (Vec (11, 9, 5), Vec (11, 10, 5), Vec (12, 10, 5), Vec (0.6, 0.6, 0.6), 0.47),
-	triangle (Vec (12, 9, 5), Vec (12, 10, 5), Vec (13, 10, 5), Vec (0.6, 0.6, 0.6), 0.48),
-	triangle (Vec (13, 9, 5), Vec (13, 10, 5), Vec (14, 10, 5), Vec (0.6, 0.6, 0.6), 0.49),
-	triangle (Vec (14, 9, 5), Vec (14, 10, 5), Vec (15, 10, 5), Vec (0.6, 0.6, 0.6), 0.40),
+	triangle (float3 (10, 9, 5), float3 (10, 10, 5), float3 (11, 10, 5), float3 (0.6, 0.6, 0.6), 0.46),
+	triangle (float3 (11, 9, 5), float3 (11, 10, 5), float3 (12, 10, 5), float3 (0.6, 0.6, 0.6), 0.47),
+	triangle (float3 (12, 9, 5), float3 (12, 10, 5), float3 (13, 10, 5), float3 (0.6, 0.6, 0.6), 0.48),
+	triangle (float3 (13, 9, 5), float3 (13, 10, 5), float3 (14, 10, 5), float3 (0.6, 0.6, 0.6), 0.49),
+	triangle (float3 (14, 9, 5), float3 (14, 10, 5), float3 (15, 10, 5), float3 (0.6, 0.6, 0.6), 0.40),
 
-	triangle (Vec (10, 10, 5), Vec (11, 10, 5), Vec (11, 11, 5), Vec (0.6, 0.6, 0.6), 0.46),
-	triangle (Vec (11, 10, 5), Vec (12, 10, 5), Vec (12, 11, 5), Vec (0.6, 0.6, 0.6), 0.47),
-	triangle (Vec (12, 10, 5), Vec (13, 10, 5), Vec (13, 11, 5), Vec (0.6, 0.6, 0.6), 0.48),
-	triangle (Vec (13, 10, 5), Vec (14, 10, 5), Vec (14, 11, 5), Vec (0.6, 0.6, 0.6), 0.49),
-	triangle (Vec (14, 10, 5), Vec (15, 10, 5), Vec (15, 11, 5), Vec (0.6, 0.6, 0.6), 0.41),
+	triangle (float3 (10, 10, 5), float3 (11, 10, 5), float3 (11, 11, 5), float3 (0.6, 0.6, 0.6), 0.46),
+	triangle (float3 (11, 10, 5), float3 (12, 10, 5), float3 (12, 11, 5), float3 (0.6, 0.6, 0.6), 0.47),
+	triangle (float3 (12, 10, 5), float3 (13, 10, 5), float3 (13, 11, 5), float3 (0.6, 0.6, 0.6), 0.48),
+	triangle (float3 (13, 10, 5), float3 (14, 10, 5), float3 (14, 11, 5), float3 (0.6, 0.6, 0.6), 0.49),
+	triangle (float3 (14, 10, 5), float3 (15, 10, 5), float3 (15, 11, 5), float3 (0.6, 0.6, 0.6), 0.41),
 
-	triangle (Vec (11, 10, 5), Vec (11, 11, 5), Vec (12, 11, 5), Vec (0.6, 0.6, 0.6), 0.37),
-	triangle (Vec (12, 10, 5), Vec (12, 11, 5), Vec (13, 11, 5), Vec (0.6, 0.6, 0.6), 0.38),
-	triangle (Vec (13, 10, 5), Vec (13, 11, 5), Vec (14, 11, 5), Vec (0.6, 0.6, 0.6), 0.39),
-	triangle (Vec (14, 10, 5), Vec (14, 11, 5), Vec (15, 11, 5), Vec (0.6, 0.6, 0.6), 0.30),
+	triangle (float3 (11, 10, 5), float3 (11, 11, 5), float3 (12, 11, 5), float3 (0.6, 0.6, 0.6), 0.37),
+	triangle (float3 (12, 10, 5), float3 (12, 11, 5), float3 (13, 11, 5), float3 (0.6, 0.6, 0.6), 0.38),
+	triangle (float3 (13, 10, 5), float3 (13, 11, 5), float3 (14, 11, 5), float3 (0.6, 0.6, 0.6), 0.39),
+	triangle (float3 (14, 10, 5), float3 (14, 11, 5), float3 (15, 11, 5), float3 (0.6, 0.6, 0.6), 0.30),
 
-	triangle (Vec (11, 11, 5), Vec (12, 11, 5), Vec (12, 12, 5), Vec (0.6, 0.6, 0.6), 0.37),
-	triangle (Vec (12, 11, 5), Vec (13, 11, 5), Vec (13, 12, 5), Vec (0.6, 0.6, 0.6), 0.38),
-	triangle (Vec (13, 11, 5), Vec (14, 11, 5), Vec (14, 12, 5), Vec (0.6, 0.6, 0.6), 0.39),
-	triangle (Vec (14, 11, 5), Vec (15, 11, 5), Vec (15, 12, 5), Vec (0.6, 0.6, 0.6), 0.31),
+	triangle (float3 (11, 11, 5), float3 (12, 11, 5), float3 (12, 12, 5), float3 (0.6, 0.6, 0.6), 0.37),
+	triangle (float3 (12, 11, 5), float3 (13, 11, 5), float3 (13, 12, 5), float3 (0.6, 0.6, 0.6), 0.38),
+	triangle (float3 (13, 11, 5), float3 (14, 11, 5), float3 (14, 12, 5), float3 (0.6, 0.6, 0.6), 0.39),
+	triangle (float3 (14, 11, 5), float3 (15, 11, 5), float3 (15, 12, 5), float3 (0.6, 0.6, 0.6), 0.31),
 
-	triangle (Vec (12, 11, 5), Vec (12, 12, 5), Vec (13, 12, 5), Vec (0.6, 0.6, 0.6), 0.28),
-	triangle (Vec (13, 11, 5), Vec (13, 12, 5), Vec (14, 12, 5), Vec (0.6, 0.6, 0.6), 0.29),
-	triangle (Vec (14, 11, 5), Vec (14, 12, 5), Vec (15, 12, 5), Vec (0.6, 0.6, 0.6), 0.20),
+	triangle (float3 (12, 11, 5), float3 (12, 12, 5), float3 (13, 12, 5), float3 (0.6, 0.6, 0.6), 0.28),
+	triangle (float3 (13, 11, 5), float3 (13, 12, 5), float3 (14, 12, 5), float3 (0.6, 0.6, 0.6), 0.29),
+	triangle (float3 (14, 11, 5), float3 (14, 12, 5), float3 (15, 12, 5), float3 (0.6, 0.6, 0.6), 0.20),
 
-	triangle (Vec (12, 12, 5), Vec (13, 12, 5), Vec (13, 13, 5), Vec (0.6, 0.6, 0.6), 0.28),
-	triangle (Vec (13, 12, 5), Vec (14, 12, 5), Vec (14, 13, 5), Vec (0.6, 0.6, 0.6), 0.29),
-	triangle (Vec (14, 12, 5), Vec (15, 12, 5), Vec (15, 13, 5), Vec (0.6, 0.6, 0.6), 0.21),
+	triangle (float3 (12, 12, 5), float3 (13, 12, 5), float3 (13, 13, 5), float3 (0.6, 0.6, 0.6), 0.28),
+	triangle (float3 (13, 12, 5), float3 (14, 12, 5), float3 (14, 13, 5), float3 (0.6, 0.6, 0.6), 0.29),
+	triangle (float3 (14, 12, 5), float3 (15, 12, 5), float3 (15, 13, 5), float3 (0.6, 0.6, 0.6), 0.21),
 
-	triangle (Vec (13, 12, 5), Vec (13, 13, 5), Vec (14, 13, 5), Vec (0.6, 0.6, 0.6), 0.19),
-	triangle (Vec (14, 12, 5), Vec (14, 13, 5), Vec (15, 13, 5), Vec (0.6, 0.6, 0.6), 0.10),
+	triangle (float3 (13, 12, 5), float3 (13, 13, 5), float3 (14, 13, 5), float3 (0.6, 0.6, 0.6), 0.19),
+	triangle (float3 (14, 12, 5), float3 (14, 13, 5), float3 (15, 13, 5), float3 (0.6, 0.6, 0.6), 0.10),
 
-	triangle (Vec (14, 13, 5), Vec (14, 14, 5), Vec (15, 14, 5), Vec (0.6, 0.6, 0.6), 0.05),
+	triangle (float3 (14, 13, 5), float3 (14, 14, 5), float3 (15, 14, 5), float3 (0.6, 0.6, 0.6), 0.05),
 
-	triangle (Vec (13, 13, 5), Vec (14, 13, 5), Vec (14, 14, 5), Vec (0.6, 0.6, 0.6), 0.19),
-	triangle (Vec (14, 13, 5), Vec (15, 13, 5), Vec (15, 14, 5), Vec (0.6, 0.6, 0.6), 0.11),
+	triangle (float3 (13, 13, 5), float3 (14, 13, 5), float3 (14, 14, 5), float3 (0.6, 0.6, 0.6), 0.19),
+	triangle (float3 (14, 13, 5), float3 (15, 13, 5), float3 (15, 14, 5), float3 (0.6, 0.6, 0.6), 0.11),
 
-	triangle (Vec (14, 14, 5), Vec (15, 14, 5), Vec (15, 15, 5), Vec (0.6, 0.6, 0.6), 0.04),
+	triangle (float3 (14, 14, 5), float3 (15, 14, 5), float3 (15, 15, 5), float3 (0.6, 0.6, 0.6), 0.04),
 
 
 
-	triangle (Vec (5, 5, 5), Vec (15, 5, 5), Vec (15, 5, 15), Vec (.50, .0, .0), 0),//down
-	triangle (Vec (5, 5, 5), Vec (5, 5, 15), Vec (15, 5, 15), Vec (.50, .0, .0), 0),//down
-	//triangle(Vec(5,15,5	),Vec(15,15,5	),Vec(15,15,15	),Vec(.50,.15,.0),0),//up
-	//triangle(Vec(5,15,5	),Vec(5,15,15	),Vec(15,15,15	),Vec(.50,.0,.15),0),//up																	 
-	//triangle (Vec (5, 5, 5), Vec (15, 5, 5), Vec (15, 15, 5), Vec (.10, .10, .10), 0.85),//back
-	triangle (Vec (5, 5, 5), Vec (5, 15, 5), Vec (15, 15, 5), Vec (.10, .10, .10), 0.85),//back
-	//triangle(Vec(5,5,15	),Vec(15,5,15	),Vec(15,15,15	),Vec(.0,.10,.50),0),//front
-	//triangle(Vec(5,5,15	),Vec(5,15,15	),Vec(15,15,15	),Vec(.10,.0,.50),0),//front																	 
-	triangle (Vec (5, 5, 5), Vec (5, 5, 15), Vec (5, 15, 15), Vec (.50, .50, .0), 0.6),//left
-	triangle (Vec (5, 5, 5), Vec (5, 15, 5), Vec (5, 15, 15), Vec (.0, .50, .50), 0),//left
-	//triangle(Vec(15,5,5	),Vec(15,5,15	),Vec(15,15,15	),Vec(.10,.50,.0),0.60),//right
-	//triangle(Vec(15,5,5	),Vec(15,15,5	),Vec(15,15,15	),Vec(.0,.50,.10),0.60),//right
+	triangle (float3 (5, 5, 5), float3 (15, 5, 5), float3 (15, 5, 15), float3 (.50, .0, .0), 0),//down
+	triangle (float3 (5, 5, 5), float3 (5, 5, 15), float3 (15, 5, 15), float3 (.50, .0, .0), 0),//down
+	//triangle(float3(5,15,5	),float3(15,15,5	),float3(15,15,15	),float3(.50,.15,.0),0),//up
+	//triangle(float3(5,15,5	),float3(5,15,15	),float3(15,15,15	),float3(.50,.0,.15),0),//up																	 
+	//triangle (float3 (5, 5, 5), float3 (15, 5, 5), float3 (15, 15, 5), float3 (.10, .10, .10), 0.85),//back
+	triangle (float3 (5, 5, 5), float3 (5, 15, 5), float3 (15, 15, 5), float3 (.10, .10, .10), 0.85),//back
+	//triangle(float3(5,5,15	),float3(15,5,15	),float3(15,15,15	),float3(.0,.10,.50),0),//front
+	//triangle(float3(5,5,15	),float3(5,15,15	),float3(15,15,15	),float3(.10,.0,.50),0),//front																	 
+	triangle (float3 (5, 5, 5), float3 (5, 5, 15), float3 (5, 15, 15), float3 (.50, .50, .0), 0.6),//left
+	triangle (float3 (5, 5, 5), float3 (5, 15, 5), float3 (5, 15, 15), float3 (.0, .50, .50), 0),//left
+	//triangle(float3(15,5,5	),float3(15,5,15	),float3(15,15,15	),float3(.10,.50,.0),0.60),//right
+	//triangle(float3(15,5,5	),float3(15,15,5	),float3(15,15,15	),float3(.0,.50,.10),0.60),//right
 
-	triangle (Vec (5, 5, 5), Vec (15, 5, 5), Vec (15, 5, 15), Vec (.50, .0, .0), 0).moveX (15),//down
-	triangle (Vec (5, 5, 5), Vec (5, 5, 15), Vec (15, 5, 15), Vec (.50, .0, .0), 0).moveX (15),//down
-	triangle (Vec (5, 15, 5), Vec (15, 15, 5), Vec (15, 15, 15), Vec (.50, .15, .0), 0).moveX (15),//up
-	triangle (Vec (5, 15, 5), Vec (5, 15, 15), Vec (15, 15, 15), Vec (.50, .0, .15), 0).moveX (15),//up																	 
-	triangle (Vec (5, 5, 5), Vec (15, 5, 5), Vec (15, 15, 5), Vec (.0, .0, .50), 0).moveX (15),//back
-	triangle (Vec (5, 5, 5), Vec (5, 15, 5), Vec (15, 15, 5), Vec (.0, .0, .50), 0).moveX (15),//back
-	triangle (Vec (5, 5, 15), Vec (15, 5, 15), Vec (15, 15, 15), Vec (.0, .10, .50), 0).moveX (15),//front
-	triangle (Vec (5, 5, 15), Vec (5, 15, 15), Vec (15, 15, 15), Vec (.10, .0, .50), 0).moveX (15),//front																	 
-	triangle (Vec (5, 5, 5), Vec (5, 5, 15), Vec (5, 15, 15), Vec (.0, .50, .0), 0).moveX (15),//left
-	triangle (Vec (5, 5, 5), Vec (5, 15, 5), Vec (5, 15, 15), Vec (.0, .50, .0), 0).moveX (15),//left
-	triangle (Vec (15, 5, 5), Vec (15, 5, 15), Vec (15, 15, 15), Vec (.10, .50, .0), 0).moveX (15),//right
-	triangle (Vec (15, 5, 5), Vec (15, 15, 5), Vec (15, 15, 15), Vec (.0, .50, .10), 0).moveX (15),//right
+	triangle (float3 (5, 5, 5), float3 (15, 5, 5), float3 (15, 5, 15), float3 (.50, .0, .0), 0).moveX (15),//down
+	triangle (float3 (5, 5, 5), float3 (5, 5, 15), float3 (15, 5, 15), float3 (.50, .0, .0), 0).moveX (15),//down
+	triangle (float3 (5, 15, 5), float3 (15, 15, 5), float3 (15, 15, 15), float3 (.50, .15, .0), 0).moveX (15),//up
+	triangle (float3 (5, 15, 5), float3 (5, 15, 15), float3 (15, 15, 15), float3 (.50, .0, .15), 0).moveX (15),//up																	 
+	triangle (float3 (5, 5, 5), float3 (15, 5, 5), float3 (15, 15, 5), float3 (.0, .0, .50), 0).moveX (15),//back
+	triangle (float3 (5, 5, 5), float3 (5, 15, 5), float3 (15, 15, 5), float3 (.0, .0, .50), 0).moveX (15),//back
+	triangle (float3 (5, 5, 15), float3 (15, 5, 15), float3 (15, 15, 15), float3 (.0, .10, .50), 0).moveX (15),//front
+	triangle (float3 (5, 5, 15), float3 (5, 15, 15), float3 (15, 15, 15), float3 (.10, .0, .50), 0).moveX (15),//front																	 
+	triangle (float3 (5, 5, 5), float3 (5, 5, 15), float3 (5, 15, 15), float3 (.0, .50, .0), 0).moveX (15),//left
+	triangle (float3 (5, 5, 5), float3 (5, 15, 5), float3 (5, 15, 15), float3 (.0, .50, .0), 0).moveX (15),//left
+	triangle (float3 (15, 5, 5), float3 (15, 5, 15), float3 (15, 15, 15), float3 (.10, .50, .0), 0).moveX (15),//right
+	triangle (float3 (15, 5, 5), float3 (15, 15, 5), float3 (15, 15, 15), float3 (.0, .50, .10), 0).moveX (15),//right
 
-	triangle (Vec (5, 5, 5), Vec (15, 5, 5), Vec (15, 5, 15), Vec (.50, .0, .0), 0).moveZ (-15),//down
-	triangle (Vec (5, 5, 5), Vec (5, 5, 15), Vec (15, 5, 15), Vec (.50, .0, .0), 0).moveZ (-15),//down
-	triangle (Vec (5, 15, 5), Vec (15, 15, 5), Vec (15, 15, 15), Vec (.50, .15, .0), 0).moveZ (-15),//up
-	triangle (Vec (5, 15, 5), Vec (5, 15, 15), Vec (15, 15, 15), Vec (.50, .0, .15), 0).moveZ (-15),//up																	 	   
-	triangle (Vec (5, 5, 5), Vec (15, 5, 5), Vec (15, 15, 5), Vec (.0, .0, .50), 0).moveZ (-15),//back
-	triangle (Vec (5, 5, 5), Vec (5, 15, 5), Vec (15, 15, 5), Vec (.0, .0, .50), 0).moveZ (-15),//back
-	triangle (Vec (5, 5, 15), Vec (15, 5, 15), Vec (15, 15, 15), Vec (.0, .10, .50), 0).moveZ (-15),//front
-	triangle (Vec (5, 5, 15), Vec (5, 15, 15), Vec (15, 15, 15), Vec (.10, .0, .50), 0).moveZ (-15),//front																	 	  
-	triangle (Vec (5, 5, 5), Vec (5, 5, 15), Vec (5, 15, 15), Vec (.0, .50, .0), 0).moveZ (-15),//left
-	triangle (Vec (5, 5, 5), Vec (5, 15, 5), Vec (5, 15, 15), Vec (.0, .50, .0), 0).moveZ (-15),//left
-	triangle (Vec (15, 5, 5), Vec (15, 5, 15), Vec (15, 15, 15), Vec (.10, .50, .0), 0).moveZ (-15),//right
-	triangle (Vec (15, 5, 5), Vec (15, 15, 5), Vec (15, 15, 15), Vec (.0, .50, .10), 0).moveZ (-15),//right
+	triangle (float3 (5, 5, 5), float3 (15, 5, 5), float3 (15, 5, 15), float3 (.50, .0, .0), 0).moveZ (-15),//down
+	triangle (float3 (5, 5, 5), float3 (5, 5, 15), float3 (15, 5, 15), float3 (.50, .0, .0), 0).moveZ (-15),//down
+	triangle (float3 (5, 15, 5), float3 (15, 15, 5), float3 (15, 15, 15), float3 (.50, .15, .0), 0).moveZ (-15),//up
+	triangle (float3 (5, 15, 5), float3 (5, 15, 15), float3 (15, 15, 15), float3 (.50, .0, .15), 0).moveZ (-15),//up																	 	   
+	triangle (float3 (5, 5, 5), float3 (15, 5, 5), float3 (15, 15, 5), float3 (.0, .0, .50), 0).moveZ (-15),//back
+	triangle (float3 (5, 5, 5), float3 (5, 15, 5), float3 (15, 15, 5), float3 (.0, .0, .50), 0).moveZ (-15),//back
+	triangle (float3 (5, 5, 15), float3 (15, 5, 15), float3 (15, 15, 15), float3 (.0, .10, .50), 0).moveZ (-15),//front
+	triangle (float3 (5, 5, 15), float3 (5, 15, 15), float3 (15, 15, 15), float3 (.10, .0, .50), 0).moveZ (-15),//front																	 	  
+	triangle (float3 (5, 5, 5), float3 (5, 5, 15), float3 (5, 15, 15), float3 (.0, .50, .0), 0).moveZ (-15),//left
+	triangle (float3 (5, 5, 5), float3 (5, 15, 5), float3 (5, 15, 15), float3 (.0, .50, .0), 0).moveZ (-15),//left
+	triangle (float3 (15, 5, 5), float3 (15, 5, 15), float3 (15, 15, 15), float3 (.10, .50, .0), 0).moveZ (-15),//right
+	triangle (float3 (15, 5, 5), float3 (15, 15, 5), float3 (15, 15, 15), float3 (.0, .50, .10), 0).moveZ (-15),//right
 
-	triangle (Vec (5, 5, 5), Vec (15, 5, 5), Vec (15, 5, 15), Vec (.50, .0, .0), 0).moveX (15).moveZ (-15),//down
-	triangle (Vec (5, 5, 5), Vec (5, 5, 15), Vec (15, 5, 15), Vec (.50, .0, .0), 0).moveX (15).moveZ (-15),//down
-	triangle (Vec (5, 15, 5), Vec (15, 15, 5), Vec (15, 15, 15), Vec (.50, .15, .0), 0).moveX (15).moveZ (-15),//up
-	triangle (Vec (5, 15, 5), Vec (5, 15, 15), Vec (15, 15, 15), Vec (.50, .0, .15), 0).moveX (15).moveZ (-15),//up																	 
-	triangle (Vec (5, 5, 5), Vec (15, 5, 5), Vec (15, 15, 5), Vec (.0, .0, .50), 0).moveX (15).moveZ (-15),//back
-	triangle (Vec (5, 5, 5), Vec (5, 15, 5), Vec (15, 15, 5), Vec (.0, .0, .50), 0).moveX (15).moveZ (-15),//back
-	triangle (Vec (5, 5, 15), Vec (15, 5, 15), Vec (15, 15, 15), Vec (.0, .10, .50), 0).moveX (15).moveZ (-15),//front
-	triangle (Vec (5, 5, 15), Vec (5, 15, 15), Vec (15, 15, 15), Vec (.10, .0, .50), 0).moveX (15).moveZ (-15),//front																	 
-	triangle (Vec (5, 5, 5), Vec (5, 5, 15), Vec (5, 15, 15), Vec (.0, .50, .0), 0).moveX (15).moveZ (-15),//left
-	triangle (Vec (5, 5, 5), Vec (5, 15, 5), Vec (5, 15, 15), Vec (.0, .50, .0), 0).moveX (15).moveZ (-15),//left
-	triangle (Vec (15, 5, 5), Vec (15, 5, 15), Vec (15, 15, 15), Vec (.10, .50, .0), 0).moveX (15).moveZ (-15),//right
-	triangle (Vec (15, 5, 5), Vec (15, 15, 5), Vec (15, 15, 15), Vec (.0, .50, .10), 0).moveX (15).moveZ (-15),//right
+	triangle (float3 (5, 5, 5), float3 (15, 5, 5), float3 (15, 5, 15), float3 (.50, .0, .0), 0).moveX (15).moveZ (-15),//down
+	triangle (float3 (5, 5, 5), float3 (5, 5, 15), float3 (15, 5, 15), float3 (.50, .0, .0), 0).moveX (15).moveZ (-15),//down
+	triangle (float3 (5, 15, 5), float3 (15, 15, 5), float3 (15, 15, 15), float3 (.50, .15, .0), 0).moveX (15).moveZ (-15),//up
+	triangle (float3 (5, 15, 5), float3 (5, 15, 15), float3 (15, 15, 15), float3 (.50, .0, .15), 0).moveX (15).moveZ (-15),//up																	 
+	triangle (float3 (5, 5, 5), float3 (15, 5, 5), float3 (15, 15, 5), float3 (.0, .0, .50), 0).moveX (15).moveZ (-15),//back
+	triangle (float3 (5, 5, 5), float3 (5, 15, 5), float3 (15, 15, 5), float3 (.0, .0, .50), 0).moveX (15).moveZ (-15),//back
+	triangle (float3 (5, 5, 15), float3 (15, 5, 15), float3 (15, 15, 15), float3 (.0, .10, .50), 0).moveX (15).moveZ (-15),//front
+	triangle (float3 (5, 5, 15), float3 (5, 15, 15), float3 (15, 15, 15), float3 (.10, .0, .50), 0).moveX (15).moveZ (-15),//front																	 
+	triangle (float3 (5, 5, 5), float3 (5, 5, 15), float3 (5, 15, 15), float3 (.0, .50, .0), 0).moveX (15).moveZ (-15),//left
+	triangle (float3 (5, 5, 5), float3 (5, 15, 5), float3 (5, 15, 15), float3 (.0, .50, .0), 0).moveX (15).moveZ (-15),//left
+	triangle (float3 (15, 5, 5), float3 (15, 5, 15), float3 (15, 15, 15), float3 (.10, .50, .0), 0).moveX (15).moveZ (-15),//right
+	triangle (float3 (15, 5, 5), float3 (15, 15, 5), float3 (15, 15, 15), float3 (.0, .50, .10), 0).moveX (15).moveZ (-15),//right
 
-	triangle (Vec (5, 5, 5), Vec (15, 5, 5), Vec (15, 5, 15), Vec (.50, .0, .0), 0).moveY (15),//down
-	triangle (Vec (5, 5, 5), Vec (5, 5, 15), Vec (15, 5, 15), Vec (.50, .0, .0), 0).moveY (15),//down
-	triangle (Vec (5, 15, 5), Vec (15, 15, 5), Vec (15, 15, 15), Vec (.50, .15, .0), 0).moveY (15),//up
-	triangle (Vec (5, 15, 5), Vec (5, 15, 15), Vec (15, 15, 15), Vec (.50, .0, .15), 0).moveY (15),//up																	 
-	triangle (Vec (5, 5, 5), Vec (15, 5, 5), Vec (15, 15, 5), Vec (.0, .0, .50), 0).moveY (15),//back
-	triangle (Vec (5, 5, 5), Vec (5, 15, 5), Vec (15, 15, 5), Vec (.0, .0, .50), 0).moveY (15),//back
-	triangle (Vec (5, 5, 15), Vec (15, 5, 15), Vec (15, 15, 15), Vec (.0, .10, .50), 0).moveY (15),//front
-	triangle (Vec (5, 5, 15), Vec (5, 15, 15), Vec (15, 15, 15), Vec (.10, .0, .50), 0).moveY (15),//front																	 
-	triangle (Vec (5, 5, 5), Vec (5, 5, 15), Vec (5, 15, 15), Vec (.0, .50, .0), 0).moveY (15),//left
-	triangle (Vec (5, 5, 5), Vec (5, 15, 5), Vec (5, 15, 15), Vec (.0, .50, .0), 0).moveY (15),//left
-	triangle (Vec (15, 5, 5), Vec (15, 5, 15), Vec (15, 15, 15), Vec (.10, .50, .0), 0).moveY (15),//right
-	triangle (Vec (15, 5, 5), Vec (15, 15, 5), Vec (15, 15, 15), Vec (.0, .50, .10), 0).moveY (15),//right
+	triangle (float3 (5, 5, 5), float3 (15, 5, 5), float3 (15, 5, 15), float3 (.50, .0, .0), 0).moveY (15),//down
+	triangle (float3 (5, 5, 5), float3 (5, 5, 15), float3 (15, 5, 15), float3 (.50, .0, .0), 0).moveY (15),//down
+	triangle (float3 (5, 15, 5), float3 (15, 15, 5), float3 (15, 15, 15), float3 (.50, .15, .0), 0).moveY (15),//up
+	triangle (float3 (5, 15, 5), float3 (5, 15, 15), float3 (15, 15, 15), float3 (.50, .0, .15), 0).moveY (15),//up																	 
+	triangle (float3 (5, 5, 5), float3 (15, 5, 5), float3 (15, 15, 5), float3 (.0, .0, .50), 0).moveY (15),//back
+	triangle (float3 (5, 5, 5), float3 (5, 15, 5), float3 (15, 15, 5), float3 (.0, .0, .50), 0).moveY (15),//back
+	triangle (float3 (5, 5, 15), float3 (15, 5, 15), float3 (15, 15, 15), float3 (.0, .10, .50), 0).moveY (15),//front
+	triangle (float3 (5, 5, 15), float3 (5, 15, 15), float3 (15, 15, 15), float3 (.10, .0, .50), 0).moveY (15),//front																	 
+	triangle (float3 (5, 5, 5), float3 (5, 5, 15), float3 (5, 15, 15), float3 (.0, .50, .0), 0).moveY (15),//left
+	triangle (float3 (5, 5, 5), float3 (5, 15, 5), float3 (5, 15, 15), float3 (.0, .50, .0), 0).moveY (15),//left
+	triangle (float3 (15, 5, 5), float3 (15, 5, 15), float3 (15, 15, 15), float3 (.10, .50, .0), 0).moveY (15),//right
+	triangle (float3 (15, 5, 5), float3 (15, 15, 5), float3 (15, 15, 15), float3 (.0, .50, .10), 0).moveY (15),//right
 
-	triangle (Vec (5, 5, 5), Vec (15, 5, 5), Vec (15, 5, 15), Vec (.50, .0, .0), 0).moveX (15).moveY (15),//down
-	triangle (Vec (5, 5, 5), Vec (5, 5, 15), Vec (15, 5, 15), Vec (.50, .0, .0), 0).moveX (15).moveY (15),//down
-	triangle (Vec (5, 15, 5), Vec (15, 15, 5), Vec (15, 15, 15), Vec (.50, .15, .0), 0).moveX (15).moveY (15),//up
-	triangle (Vec (5, 15, 5), Vec (5, 15, 15), Vec (15, 15, 15), Vec (.50, .0, .15), 0).moveX (15).moveY (15),//up																	 
-	triangle (Vec (5, 5, 5), Vec (15, 5, 5), Vec (15, 15, 5), Vec (.0, .0, .50), 0).moveX (15).moveY (15),//back
-	triangle (Vec (5, 5, 5), Vec (5, 15, 5), Vec (15, 15, 5), Vec (.0, .0, .50), 0).moveX (15).moveY (15),//back
-	triangle (Vec (5, 5, 15), Vec (15, 5, 15), Vec (15, 15, 15), Vec (.0, .10, .50), 0).moveX (15).moveY (15),//front
-	triangle (Vec (5, 5, 15), Vec (5, 15, 15), Vec (15, 15, 15), Vec (.10, .0, .50), 0).moveX (15).moveY (15),//front																	 
-	triangle (Vec (5, 5, 5), Vec (5, 5, 15), Vec (5, 15, 15), Vec (.0, .50, .0), 0).moveX (15).moveY (15),//left
-	triangle (Vec (5, 5, 5), Vec (5, 15, 5), Vec (5, 15, 15), Vec (.0, .50, .0), 0).moveX (15).moveY (15),//left
-	triangle (Vec (15, 5, 5), Vec (15, 5, 15), Vec (15, 15, 15), Vec (.10, .50, .0), 0).moveX (15).moveY (15),//right
-	triangle (Vec (15, 5, 5), Vec (15, 15, 5), Vec (15, 15, 15), Vec (.0, .50, .10), 0).moveX (15).moveY (15),//right
+	triangle (float3 (5, 5, 5), float3 (15, 5, 5), float3 (15, 5, 15), float3 (.50, .0, .0), 0).moveX (15).moveY (15),//down
+	triangle (float3 (5, 5, 5), float3 (5, 5, 15), float3 (15, 5, 15), float3 (.50, .0, .0), 0).moveX (15).moveY (15),//down
+	triangle (float3 (5, 15, 5), float3 (15, 15, 5), float3 (15, 15, 15), float3 (.50, .15, .0), 0).moveX (15).moveY (15),//up
+	triangle (float3 (5, 15, 5), float3 (5, 15, 15), float3 (15, 15, 15), float3 (.50, .0, .15), 0).moveX (15).moveY (15),//up																	 
+	triangle (float3 (5, 5, 5), float3 (15, 5, 5), float3 (15, 15, 5), float3 (.0, .0, .50), 0).moveX (15).moveY (15),//back
+	triangle (float3 (5, 5, 5), float3 (5, 15, 5), float3 (15, 15, 5), float3 (.0, .0, .50), 0).moveX (15).moveY (15),//back
+	triangle (float3 (5, 5, 15), float3 (15, 5, 15), float3 (15, 15, 15), float3 (.0, .10, .50), 0).moveX (15).moveY (15),//front
+	triangle (float3 (5, 5, 15), float3 (5, 15, 15), float3 (15, 15, 15), float3 (.10, .0, .50), 0).moveX (15).moveY (15),//front																	 
+	triangle (float3 (5, 5, 5), float3 (5, 5, 15), float3 (5, 15, 15), float3 (.0, .50, .0), 0).moveX (15).moveY (15),//left
+	triangle (float3 (5, 5, 5), float3 (5, 15, 5), float3 (5, 15, 15), float3 (.0, .50, .0), 0).moveX (15).moveY (15),//left
+	triangle (float3 (15, 5, 5), float3 (15, 5, 15), float3 (15, 15, 15), float3 (.10, .50, .0), 0).moveX (15).moveY (15),//right
+	triangle (float3 (15, 5, 5), float3 (15, 15, 5), float3 (15, 15, 15), float3 (.0, .50, .10), 0).moveX (15).moveY (15),//right
 
-	triangle (Vec (5, 5, 5), Vec (15, 5, 5), Vec (15, 5, 15), Vec (.50, .0, .0), 0).moveZ (-15).moveY (15),//down
-	triangle (Vec (5, 5, 5), Vec (5, 5, 15), Vec (15, 5, 15), Vec (.50, .0, .0), 0).moveZ (-15).moveY (15),//down
-	triangle (Vec (5, 15, 5), Vec (15, 15, 5), Vec (15, 15, 15), Vec (.50, .15, .0), 0).moveZ (-15).moveY (15),//up
-	triangle (Vec (5, 15, 5), Vec (5, 15, 15), Vec (15, 15, 15), Vec (.50, .0, .15), 0).moveZ (-15).moveY (15),//up																	 	   
-	triangle (Vec (5, 5, 5), Vec (15, 5, 5), Vec (15, 15, 5), Vec (.0, .0, .50), 0).moveZ (-15).moveY (15),//back
-	triangle (Vec (5, 5, 5), Vec (5, 15, 5), Vec (15, 15, 5), Vec (.0, .0, .50), 0).moveZ (-15).moveY (15),//back
-	triangle (Vec (5, 5, 15), Vec (15, 5, 15), Vec (15, 15, 15), Vec (.0, .10, .50), 0).moveZ (-15).moveY (15),//front
-	triangle (Vec (5, 5, 15), Vec (5, 15, 15), Vec (15, 15, 15), Vec (.10, .0, .50), 0).moveZ (-15).moveY (15),//front																	 	  
-	triangle (Vec (5, 5, 5), Vec (5, 5, 15), Vec (5, 15, 15), Vec (.0, .50, .0), 0).moveZ (-15).moveY (15),//left
-	triangle (Vec (5, 5, 5), Vec (5, 15, 5), Vec (5, 15, 15), Vec (.0, .50, .0), 0).moveZ (-15).moveY (15),//left
-	triangle (Vec (15, 5, 5), Vec (15, 5, 15), Vec (15, 15, 15), Vec (.10, .50, .0), 0).moveZ (-15).moveY (15),//right
-	triangle (Vec (15, 5, 5), Vec (15, 15, 5), Vec (15, 15, 15), Vec (.0, .50, .10), 0).moveZ (-15).moveY (15),//right
+	triangle (float3 (5, 5, 5), float3 (15, 5, 5), float3 (15, 5, 15), float3 (.50, .0, .0), 0).moveZ (-15).moveY (15),//down
+	triangle (float3 (5, 5, 5), float3 (5, 5, 15), float3 (15, 5, 15), float3 (.50, .0, .0), 0).moveZ (-15).moveY (15),//down
+	triangle (float3 (5, 15, 5), float3 (15, 15, 5), float3 (15, 15, 15), float3 (.50, .15, .0), 0).moveZ (-15).moveY (15),//up
+	triangle (float3 (5, 15, 5), float3 (5, 15, 15), float3 (15, 15, 15), float3 (.50, .0, .15), 0).moveZ (-15).moveY (15),//up																	 	   
+	triangle (float3 (5, 5, 5), float3 (15, 5, 5), float3 (15, 15, 5), float3 (.0, .0, .50), 0).moveZ (-15).moveY (15),//back
+	triangle (float3 (5, 5, 5), float3 (5, 15, 5), float3 (15, 15, 5), float3 (.0, .0, .50), 0).moveZ (-15).moveY (15),//back
+	triangle (float3 (5, 5, 15), float3 (15, 5, 15), float3 (15, 15, 15), float3 (.0, .10, .50), 0).moveZ (-15).moveY (15),//front
+	triangle (float3 (5, 5, 15), float3 (5, 15, 15), float3 (15, 15, 15), float3 (.10, .0, .50), 0).moveZ (-15).moveY (15),//front																	 	  
+	triangle (float3 (5, 5, 5), float3 (5, 5, 15), float3 (5, 15, 15), float3 (.0, .50, .0), 0).moveZ (-15).moveY (15),//left
+	triangle (float3 (5, 5, 5), float3 (5, 15, 5), float3 (5, 15, 15), float3 (.0, .50, .0), 0).moveZ (-15).moveY (15),//left
+	triangle (float3 (15, 5, 5), float3 (15, 5, 15), float3 (15, 15, 15), float3 (.10, .50, .0), 0).moveZ (-15).moveY (15),//right
+	triangle (float3 (15, 5, 5), float3 (15, 15, 5), float3 (15, 15, 15), float3 (.0, .50, .10), 0).moveZ (-15).moveY (15),//right
 
-	triangle (Vec (5, 5, 5), Vec (15, 5, 5), Vec (15, 5, 15), Vec (.50, .0, .0), 0).moveX (15).moveZ (-15).moveY (15),//down
-	triangle (Vec (5, 5, 5), Vec (5, 5, 15), Vec (15, 5, 15), Vec (.50, .0, .0), 0).moveX (15).moveZ (-15).moveY (15),//down
-	triangle (Vec (5, 15, 5), Vec (15, 15, 5), Vec (15, 15, 15), Vec (.50, .15, .0), 0).moveX (15).moveZ (-15).moveY (15),//up
-	triangle (Vec (5, 15, 5), Vec (5, 15, 15), Vec (15, 15, 15), Vec (.50, .0, .15), 0).moveX (15).moveZ (-15).moveY (15),//up																	 
-	triangle (Vec (5, 5, 5), Vec (15, 5, 5), Vec (15, 15, 5), Vec (.0, .0, .50), 0).moveX (15).moveZ (-15).moveY (15),//back
-	triangle (Vec (5, 5, 5), Vec (5, 15, 5), Vec (15, 15, 5), Vec (.0, .0, .50), 0).moveX (15).moveZ (-15).moveY (15),//back
-	triangle (Vec (5, 5, 15), Vec (15, 5, 15), Vec (15, 15, 15), Vec (.0, .10, .50), 0).moveX (15).moveZ (-15).moveY (15),//front
-	triangle (Vec (5, 5, 15), Vec (5, 15, 15), Vec (15, 15, 15), Vec (.10, .0, .50), 0).moveX (15).moveZ (-15).moveY (15),//front																	 
-	triangle (Vec (5, 5, 5), Vec (5, 5, 15), Vec (5, 15, 15), Vec (.0, .50, .0), 0).moveX (15).moveZ (-15).moveY (15),//left
-	triangle (Vec (5, 5, 5), Vec (5, 15, 5), Vec (5, 15, 15), Vec (.0, .50, .0), 0).moveX (15).moveZ (-15).moveY (15),//left
-	triangle (Vec (15, 5, 5), Vec (15, 5, 15), Vec (15, 15, 15), Vec (.10, .50, .0), 0).moveX (15).moveZ (-15).moveY (15),//right
-	triangle (Vec (15, 5, 5), Vec (15, 15, 5), Vec (15, 15, 15), Vec (.0, .50, .10), 0).moveX (15).moveZ (-15).moveY (15)//right
+	triangle (float3 (5, 5, 5), float3 (15, 5, 5), float3 (15, 5, 15), float3 (.50, .0, .0), 0).moveX (15).moveZ (-15).moveY (15),//down
+	triangle (float3 (5, 5, 5), float3 (5, 5, 15), float3 (15, 5, 15), float3 (.50, .0, .0), 0).moveX (15).moveZ (-15).moveY (15),//down
+	triangle (float3 (5, 15, 5), float3 (15, 15, 5), float3 (15, 15, 15), float3 (.50, .15, .0), 0).moveX (15).moveZ (-15).moveY (15),//up
+	triangle (float3 (5, 15, 5), float3 (5, 15, 15), float3 (15, 15, 15), float3 (.50, .0, .15), 0).moveX (15).moveZ (-15).moveY (15),//up																	 
+	triangle (float3 (5, 5, 5), float3 (15, 5, 5), float3 (15, 15, 5), float3 (.0, .0, .50), 0).moveX (15).moveZ (-15).moveY (15),//back
+	triangle (float3 (5, 5, 5), float3 (5, 15, 5), float3 (15, 15, 5), float3 (.0, .0, .50), 0).moveX (15).moveZ (-15).moveY (15),//back
+	triangle (float3 (5, 5, 15), float3 (15, 5, 15), float3 (15, 15, 15), float3 (.0, .10, .50), 0).moveX (15).moveZ (-15).moveY (15),//front
+	triangle (float3 (5, 5, 15), float3 (5, 15, 15), float3 (15, 15, 15), float3 (.10, .0, .50), 0).moveX (15).moveZ (-15).moveY (15),//front																	 
+	triangle (float3 (5, 5, 5), float3 (5, 5, 15), float3 (5, 15, 15), float3 (.0, .50, .0), 0).moveX (15).moveZ (-15).moveY (15),//left
+	triangle (float3 (5, 5, 5), float3 (5, 15, 5), float3 (5, 15, 15), float3 (.0, .50, .0), 0).moveX (15).moveZ (-15).moveY (15),//left
+	triangle (float3 (15, 5, 5), float3 (15, 5, 15), float3 (15, 15, 15), float3 (.10, .50, .0), 0).moveX (15).moveZ (-15).moveY (15),//right
+	triangle (float3 (15, 5, 5), float3 (15, 15, 5), float3 (15, 15, 15), float3 (.0, .50, .10), 0).moveX (15).moveZ (-15).moveY (15)//right
 
 };
 
-/*Vec::Vec(float3 & b) {
+/*float3::float3(float3 & b) {
 	x = b.v[0];
 	y = b.v[1];
 	z = b.v[2];
 }
 
-void Vec::operator=(const float3& b) {
+void float3::operator=(const float3& b) {
 	x = b.v[0];
 	y = b.v[1];
 	z = b.v[2];
 }*/
 
-bool helpOrient (triangle t, Vec v1, Vec v2) {
-	Vec normalization = t.normal ();
+bool helpOrient (triangle t, float3 v1, float3 v2) {
+	float3 normalization = t.normal ();
 	double x1 = normalization.dot (v1 - t.p[0]);
 	double x2 = normalization.dot (v2 - t.p[0]);
 	return x1*x2 + EPSILON >= 0;
@@ -375,11 +322,11 @@ inline   bool intersectHelper (const triangle * objects, const unsigned int objC
 Returns true if the light source is visible
 */
 // For standard raytracing
-inline   bool Visible (const  world & wrld, const Vec & hit, const Vec & light, const int & id)
+inline   bool Visible (const  world & wrld, const float3 & hit, const float3 & light, const int & id)
 {
 	double distToLight = hit.distance (light);
 	float3 hit1;
-	Vec sub = light - hit;
+	float3 sub = light - hit;
 	Ray r (hit, sub);
 	double distanse;
 	int id1 = -1;
@@ -393,11 +340,11 @@ inline   bool Visible (const  world & wrld, const Vec & hit, const Vec & light, 
 }
 
 // For K-d tree raytracing
-inline   bool Visible (const KDNode & root, const  world & wrld, const float3 & hit, const Vec & light, const triangle & tri)
+inline   bool Visible (const KDNode & root, const  world & wrld, const float3 & hit, const float3 & light, const triangle & tri)
 {
 	double distToLight = hit.distance (light);
 	float3 hit1;
-	Vec sub = light - hit;
+	float3 sub = light - hit;
 	Ray r (hit, sub);
 	double distanse;
 	int id1 = -1;
@@ -418,26 +365,36 @@ inline   bool Visible (const KDNode & root, const  world & wrld, const float3 & 
 }
 
 
-inline   Vec Shade (const Vec & hit, const Vec & light) {
+inline   float3 Shade (const float3 & hit, const float3 & light) {
 	//double ka = 0.1; //ambient coefficient
-	return Vec (0.3, 0.3, 0.3);
+	return float3 (0.3, 0.3, 0.3);
 }
 /*
 Return new reflected ray
 */
-inline   Ray reflect (const Ray & r,const  triangle & obj,const Vec & hit) {
-	Vec normal = obj.normal ();
-	Vec iV = hit - Vec(r.o);//inputVector
+/*inline   Ray reflect (const Ray & r,const  triangle & obj,const float3 & hit) {
+	float3 normal = obj.normal ();
+	float3 iV = hit - float3(r.o);//inputfloat3tor
 	normal = normal.normalization ();
-	Vec rV = iV - ((normal*(iV.dot (normal))) * 2);//reflectVector
+	float3 rV = iV - ((normal*(iV.dot (normal))) * 2);//reflectfloat3tor
 	Ray reflect (hit, rV.normalization ());//new reflect ray
 	return reflect;
 }
+*/
+inline   Ray reflect (const Ray & r,const  triangle & obj,const float3 & hit) {
+	float3 normal = obj.normal ();
+	float3 iV = hit - r.o;//inputfloat3tor
+	normal = normal.normalization ();
+	float3 rV = iV - ((normal*(iV.dot (normal))) * 2);//reflectfloat3tor
+	Ray reflect (hit, rV.normalization ());//new reflect ray
+	return reflect;
+}
+
 /*
 Recursively trace the input ray with a light source and reflection
 */
-Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
-	Vec color (0, 0, 0);
+float3 RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
+	float3 color (0, 0, 0);
 	int id = 0;
 	float3 hit;// найдем полигон
 	double distanse ;
@@ -477,8 +434,8 @@ Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
 	return color;
 }
 
-Vec KDTreeRayTrace (const  KDNode &root, const  world  & wrld, const Ray & ray,unsigned int deep) {
-	Vec color (0, 0, 0);
+float3 KDTreeRayTrace (const  KDNode &root, const  world  & wrld, const Ray & ray,unsigned int deep) {
+	float3 color (0, 0, 0);
 	int id = 0;
 	float3 hit;// найдем полигон
 	double distanse ;
@@ -517,124 +474,13 @@ Vec KDTreeRayTrace (const  KDNode &root, const  world  & wrld, const Ray & ray,u
 	return color;
 }
 
-Ray * RenderRayHelper (const camera & cam, const imgSettings & img) {
-	Vec r;
-	int kFilter = 4;
-#ifdef sampleInCenter
-	kFilter = 1;
-#endif
-	int RaysCount = img.h*img.w*kFilter;
-	Ray * allRays = (Ray *)malloc (sizeof(Ray)*RaysCount);
-	int iii = 0;
-//#pragma omp parallel for schedule(dynamic, 1) private(r)       // OpenMP 
-	for (unsigned int y = 0; y < img.h; ++y) // Loop over image rows 
-	{
-		//fprintf (stderr, "\rRendering (%d spp) %5.2f%%", img.samps * 4, 100.*y / (img.h - 1));
-		for (unsigned int x = 0; x < img.w; ++x)   // Loop cols 
-		{
-			int i = (img.h - y - 1)*img.w + x;
-#ifdef sampleInCenter
-			double sx = 0.5, sy = 0.5;
-			double k = 1;
-#else
-			double k = .25;
-			for (unsigned int sy = 0; sy < 2; ++sy) // 2x2 subpixel rows 
-			for (unsigned int sx = 0; sx < 2; ++sx) // 2x2 subpixel cols	
-#endif
-			{
-				r = Vec ();
-				for (unsigned int sa = 0; sa < img.samps; ++sa)//quality of image
-				{
-#ifdef filter
-					double r1 = 2 * (double)rand () / (double)RAND_MAX, dx = r1 < 1 ? sqrt (r1) - 1 : 1 - sqrt (2 - r1);
-					double r2 = 2 * (double)rand () / (double)RAND_MAX, dy = r2 < 1 ? sqrt (r2) - 1 : 1 - sqrt (2 - r2);
-#else
-					double dx = 0, dy = 0;
-#endif
-					Vec d = cam.cameraXangle*(((sx + .5 + dx) / 2 + x) / img.w - .5) +
-							cam.cameraYangle*(((sy + .5 + dy) / 2 + y) / img.h - .5) +
-							cam.cameraLocation.d;
-					allRays[i] = Ray (cam.cameraLocation.o + d * 140, d.normalization ());
-					i++;
-				}
-			}
-
-		}
-	}
-	return allRays;
-}
-
-void renderNEW (const Ray * allRays, const  world & wrld, const imgSettings & img, Vec *c) {
-	Vec r;
-	for (int i = 0; i < img.h*img.w; i++)
-	{
-		fprintf (stderr, "\rRendering (%d spp) %5.2f%%", img.samps * 4, (100.*i )/ (img.h*img.w));
-	#ifdef sampleInCenter
-		for (unsigned int sa = 0; sa < img.samps; ++sa)//quality of image
-		{
-			r = r + RayTrace (wrld, allRays[i], 5)*(1. / img.samps);
-		}
-	#else
-		for (unsigned int sa = 0; sa < img.samps; ++sa)//quality of image
-		{
-			r = r + RayTrace (wrld, allRays[i*4], 5)*(1. / img.samps);
-			r = r + RayTrace (wrld, allRays[i*4+1], 5)*(1. / img.samps);
-			r = r + RayTrace (wrld, allRays[i*4+2], 5)*(1. / img.samps);
-			r = r + RayTrace (wrld, allRays[i*4+3], 5)*(1. / img.samps);
-		}
-		r = r*0.25;
-	#endif
-		c[i] = c[i] + Vec (clamp (r.x), clamp (r.y), clamp (r.z));
-	}
-}
-inline void Render (const  world & wrld, const camera & cam, Vec *c, const imgSettings & img)
-{
-	Vec r; 
-	int i = 0;
-	#pragma omp parallel for schedule(dynamic, 2) private(r)       
-	for (/*unsigned*/ int y = 0; y < img.h; ++y) // Loop over image rows 
-	{
-		fprintf (stderr, "\rRendering (%d spp) %5.2f%%", img.samps * 4, 100.*y / (img.h - 1));
-		for (unsigned int x = 0; x < img.w; ++x)   // Loop cols 
-		{
-			int i = y*img.w + x;	// use this with OpenMP
-			#ifdef sampleInCenter
-				double sx = 0.5, sy = 0.5;
-				double k = 1;				
-			#else
-				double k = .25;
-				for (unsigned int sy = 0; sy < 2; ++sy)     // 2x2 subpixel rows 
-				for (unsigned int sx = 0; sx < 2; ++sx) // 2x2 subpixel cols	
-			#endif
-			{
-				r = Vec ();
-				//for (unsigned int sa = 0; sa < img.samps; ++sa)// for distributed ray tracer
-				{
-					#ifdef filter
-						double r1 = 2 * (double)rand () / (double)RAND_MAX, dx = r1 < 1 ? sqrt (r1) - 1 : 1 - sqrt (2 - r1);
-						double r2 = 2 * (double)rand () / (double)RAND_MAX, dy = r2 < 1 ? sqrt (r2) - 1 : 1 - sqrt (2 - r2);
-					#else
-						double dx = 0, dy = 0;
-					#endif
-					Vec d = cam.cameraXangle*(((sx + .5 + dx) / 2 + x) / img.w - .5) +
-						cam.cameraYangle*(((sy + .5 + dy) / 2 + y) / img.h - .5) +
-						cam.cameraLocation.d;
-					r = r + RayTrace (wrld, Ray (cam.cameraLocation.o + d * 140, d.normalization ()), 5)*(1. / img.samps);
-				}
-				c[i] = c[i] + Vec (clamp (r.x), clamp (r.y), clamp (r.z))*k;
-				
-			}
-			i++;
-		}
-	}
-}
 
 #ifndef kdtrace
-void SimpleRender (const  world & wrld, const camera & cam, Vec c[], const imgSettings & img) {
+void SimpleRender (const  world & wrld, const camera & cam, float3 c[], const imgSettings & img) {
 #else
-void SimpleRender (const  KDNode &root, const  world & wrld, const camera & cam, Vec c[], const imgSettings & img) {
+void SimpleRender (const  KDNode &root, const  world & wrld, const camera & cam, float3 c[], const imgSettings & img) {
 #endif
-	Vec r; 
+	float3 r; 
 	int i = 0;
 	#pragma omp parallel for schedule(dynamic, 2) private(r, i)       
 	for (int y = img.h - 1; y >= 0; --y) { // Loop over image rows 
@@ -650,9 +496,9 @@ void SimpleRender (const  KDNode &root, const  world & wrld, const camera & cam,
 					for (unsigned int sx = 0; sx < 2; ++sx) // 2x2 subpixel cols	
 			#endif
 				{
-					r = Vec ();
+					r = float3 ();
 					//double dx = 0, dy = 0;
-					Vec d = cam.cameraXangle*(((sx + .5) / 2 + x) / img.w - .5) +
+					float3 d = cam.cameraXangle*(((sx + .5) / 2 + x) / img.w - .5) +
 						cam.cameraYangle*(((sy + .5) / 2 + y) / img.h - .5) +
 						cam.cameraLocation.d;
 
@@ -662,7 +508,7 @@ void SimpleRender (const  KDNode &root, const  world & wrld, const camera & cam,
 					r += KDTreeRayTrace (root, wrld, Ray (cam.cameraLocation.o + d * 140, d.normalization ()), 1);
 				#endif
 
-					c[i] += Vec (clamp (r.x), clamp (r.y), clamp (r.z))*k;
+					c[i] += float3 (clamp (r.v[X]), clamp (r.v[Y]), clamp (r.v[Z]))*k;
 				}
 			//--i;
 		}
@@ -676,14 +522,14 @@ int main (int argc, char *argv[])
 	int w = 320, h = 240;
 	int samps = argc == 2 ? atoi (argv[1]) / 4 : 1; // # samples 
 	
-	Vec  r, *c = new Vec[w*h];
+	float3  r, *c = new float3[w*h];
 	imgSettings img = imgSettings (w, h, samps);
 
 	// // Rabbit
 	/*Model_PLY rabbit;
 	rabbit.Load ("bun_zipper_res4.ply");
-	//camera cam (Ray (Vec (85, 55, 170), Vec (-0.45, -0.04, -1).normalization ()), Vec (w*.5135 / h));
-	camera cam (Ray (Vec (0, 70, 220), Vec (0, -0.25, -1).normalization ()), Vec (w*.5135 / h,0,0));
+	//camera cam (Ray (float3 (85, 55, 170), float3 (-0.45, -0.04, -1).normalization ()), float3 (w*.5135 / h));
+	camera cam (Ray (float3 (0, 70, 220), float3 (0, -0.25, -1).normalization ()), float3 (w*.5135 / h,0,0));
 	int objCount = sizeof(obj) / sizeof(triangle);
 	int lightsCount = 1;
 	world wrld = world (objCount, lightsCount, obj, lights);
@@ -698,8 +544,8 @@ int main (int argc, char *argv[])
 
 	// // Cube
 	int objCount = sizeof(obj) / sizeof(triangle);
-	int lightsCount = sizeof(lights) / sizeof(Vec);
-	camera cam (Ray (Vec (140, 45, 170), Vec (-0.7, -0.15, -1).normalization ()), Vec (w*.5135 / h));
+	int lightsCount = sizeof(lights) / sizeof(float3);
+	camera cam (Ray (float3 (140, 45, 170), float3 (-0.7, -0.15, -1).normalization ()), float3 (w*.5135 / h));
 	world wrld = world (objCount, lightsCount, obj, lights);
 	
 	KDNode scene;
@@ -707,10 +553,10 @@ int main (int argc, char *argv[])
 	
 	// // One triangle
 	/*
-	camera cam (Ray (Vec (105, 44, 190), Vec (0, 1, -0.2).normalization ()), Vec (w*.5135 / h));
-	Vec light[] = {Vec(85, 45, 170)};
+	camera cam (Ray (float3 (105, 44, 190), float3 (0, 1, -0.2).normalization ()), float3 (w*.5135 / h));
+	float3 light[] = {float3(85, 45, 170)};
 	triangle tri[] = {
-		triangle (Vec (85, 180, 120), Vec (105, 180, 150), Vec (65, 180, 190), Vec (.70, .10, .10), 0.1)};
+		triangle (float3 (85, 180, 120), float3 (105, 180, 150), float3 (65, 180, 190), float3 (.70, .10, .10), 0.1)};
 	world wrld = world (1, 1, tri, light);
 	*/
 

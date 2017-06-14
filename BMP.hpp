@@ -62,7 +62,7 @@ inline void writeToPpm (Vec *c, const unsigned  int w, const unsigned int h)
 #endif
 }
 
-void writeToBmp (Vec *c, const unsigned  int w, const unsigned int h)
+void writeToBmp (float3 *c, const unsigned  int w, const unsigned int h)
 {
 	bmpinfo first (w, h);
 	char filename [30];
