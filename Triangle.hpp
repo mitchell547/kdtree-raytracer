@@ -150,9 +150,9 @@ struct triangle
 	
 
 	inline bool mollerTrumboreIntersect(const Ray &r, float3 & hit) const {
-		float3 tuv = float3();
-		float3 p0p1 = float3(p[1] - p[0]);
-		float3 p0p2 = float3(p[2] - p[0]);
+		float3 tuv;
+		float3 p0p1 = p[1] - p[0];
+		float3 p0p2 = p[2] - p[0];
 		float3 pvec = r.d.cross(p0p2);
 		float det = p0p1.dot(pvec);
 

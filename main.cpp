@@ -23,7 +23,7 @@
 #define sampleInCenter
 //#define filter
 
-#define kdtrace
+//#define kdtrace
 
 #include "kdtree.h"
 
@@ -348,8 +348,8 @@ inline   void intersect (const triangle * objects, const unsigned int objCount,
 		//bool isSpherIntersection = objects[i].intersectSpher (r);
 		//if (isSpherIntersection)
 		{
-			//bool isIntersection = objects[i].intersect (r, localHit); 
-			bool isIntersection = objects[i].mollerTrumboreIntersect(r, localHit); 
+			bool isIntersection = objects[i].intersect (r, localHit); 
+			//bool isIntersection = objects[i].mollerTrumboreIntersect(r, localHit); 
 			
 			if (isIntersection)
 			{
@@ -514,7 +514,7 @@ Vec KDTreeRayTrace (const  KDNode &root, const  world  & wrld, const Ray & ray,u
 	if (tr->reflect > 0 && deep > 0)//найдем отражение
 	{
 		Ray reflRay = reflect (ray, *tr, hit);
-		color = color*(1.0 - tr->reflect) + RayTrace (wrld, reflRay, deep--)*tr->reflect;
+		color = color*(1.0 - tr->reflect) + KDTreeRayTrace (root, wrld, reflRay, deep--)*tr->reflect;
 	}
 	return color;
 }
@@ -693,7 +693,7 @@ int main (int argc, char *argv[])
 	
 	KDNode scene;
 	double build_s = omp_get_wtime();
-	buildKDTree(scene, wrld.objects, wrld.objCount,2);
+	buildKDTree(scene, wrld.objects, wrld.objCount, 4);
 	double build_f = omp_get_wtime();
 	fprintf (stderr, "\rtime %5.3f\n", build_f-build_s);
 	
@@ -705,7 +705,7 @@ int main (int argc, char *argv[])
 	world wrld = world (objCount, lightsCount, obj, lights);
 	
 	KDNode scene;
-	buildKDTree(scene, obj, objCount, 0);
+	buildKDTree(scene, obj, objCount, 1);
 	*/
 	// // One triangle
 	/*

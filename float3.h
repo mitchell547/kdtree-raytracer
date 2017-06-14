@@ -11,13 +11,15 @@ enum AXIS {	X = 0,
 struct float3 {
 	float v[3];
 
-	float3() {
+	/*inline float3() {
 		v[0] = 0; v[1] = 0; v[2] = 0;
-	}
+	}*/
 
-	float3(float x, float y, float z) { v[X] = x; v[Y] = y; v[Z] = z; }
+	inline float3(float x=0, float y=0, float z=0) { v[X] = x; v[Y] = y; v[Z] = z; }
 
-	float3(const Vec&b) { v[0] = b.x; v[1] = b.y; v[2] = b.z; }
+	//inline float3(const float3&b) { v[0] = b.v[0]; v[1] = b.v[1]; v[2] = b.v[2]; }
+
+	inline float3(const Vec&b) { v[0] = b.x; v[1] = b.y; v[2] = b.z; }
 
 	inline   float3		operator+	  (const float3 &b) const {
 		return float3 (v[X] + b.v[X], v[Y] + b.v[Y], v[Z] + b.v[Z]);
