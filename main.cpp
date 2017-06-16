@@ -1,6 +1,3 @@
-//
-//#include "cuda_runtime.h"
-//#include "device_launch_parameters.h"
 #include <stdio.h>
 #include <math.h>   
 #include <stdlib.h> 
@@ -16,7 +13,7 @@
 #include "Include/World.hpp"
 #define EPSILON 0.000000001
 #define INF 1e20
-//#define standartTest //  or...
+//#define standartTest //  or... (ray triangle test)
 //#define baricentTest
 
 
