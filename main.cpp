@@ -17,7 +17,7 @@
 //#define baricentTest
 
 
-
+// Render settings:
 // "Настройки" рендера:
 
 //#define sampling	// antialiasing
@@ -25,10 +25,12 @@
 #define REFLECTION_DEPTH 2
 #define TREE_DEPTH 1
 
+// Choose model
 // (*) Выбор модели (одна из)
 //#define rabbit_model
 #define cube_model
 
+// Using k-d tree tracing
 // (*) Включение трассировки k-d дерева
 #define kdtrace
 
@@ -37,6 +39,7 @@
 #include "Include/BasicRayTracer.h"
 #include "Include/KDTreeRayTracer.h"
 
+// Cube model
 // Сцена с кубом
 Vec lights[] = { Vec (7, 70, 25),
 				Vec (60, 7, 7) };
@@ -286,16 +289,19 @@ triangle obj[] = {
 
 int main (int argc, char *argv[])
 {
+	// Image settings
 	// Параметры изображения
 	//int w = 1024, h = 768;
 	//int w = 640, h = 480;
 	int w = 320, h = 240;
 	int samps = argc == 2 ? atoi (argv[1]) / 4 : 1; // # samples 
 	
+	// Output image
 	// Выходное изображение
 	Vec  r, *c = new Vec[w*h];
 	imgSettings img = imgSettings (w, h, samps);
 
+	// 3D Scenes:
 	// Сцены:
 
 	// // Модель кролика 
@@ -327,6 +333,7 @@ int main (int argc, char *argv[])
 	buildKDTree(scene, obj, objCount, TREE_DEPTH);
 #endif
 
+	// One triangle
 	// // Один треугольник перед камерой
 	/*
 	camera cam (Ray (Vec (105, 44, 190), Vec (0, 1, -0.2).normalization ()), Vec (w*.5135 / h));
@@ -336,6 +343,7 @@ int main (int argc, char *argv[])
 	world wrld = world (1, 1, tri, light);
 	*/
 
+	// Rendering
 	// Рендеринг
 	double start = omp_get_wtime ();
 	#ifndef kdtrace
@@ -347,6 +355,7 @@ int main (int argc, char *argv[])
 
 	fprintf (stderr, "\nElapsed time %5.3f", end-start);
 
+	// Output
 	// Вывод
 	writeToBmp (c, w, h);
 	getchar();
