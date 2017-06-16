@@ -1,3 +1,8 @@
+#include "World.hpp"
+#include "Geometry\Vec.hpp"
+#include "Geometry\float3.h"
+#include "Geometry\Triangle.hpp"
+#include "Geometry\Ray.hpp"
 #include "BasicRayTracer.h"
 #include "kdtree.h"
 // Трассировка с применением К-мерного дерева

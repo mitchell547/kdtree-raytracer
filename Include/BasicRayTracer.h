@@ -2,12 +2,12 @@
 #include <math.h>   
 #include <stdlib.h> 
 #include <omp.h>
-#include "Vec.hpp"
-#include "Ray.hpp"
-#include "Triangle.hpp"
-#include "BMP.hpp"
-#include "raytracer_misc.h"
-#include "World.hpp"
+#include "Include/Geometry/Vec.hpp"
+#include "Include/Geometry/Ray.hpp"
+#include "Include/Geometry/Triangle.hpp"
+//#include "BMP.hpp"
+#include "Include/raytracer_misc.h"
+#include "Include/World.hpp"
 #define INF 1e20
 
 #pragma once

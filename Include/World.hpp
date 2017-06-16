@@ -2,7 +2,7 @@
 
 //#include "OBJ.hpp"
 //#include "Ply.hpp"
-#include "Triangle.hpp"
+#include "Include/Geometry/Triangle.hpp"
 #pragma once
 struct world
 {

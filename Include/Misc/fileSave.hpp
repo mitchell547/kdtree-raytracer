@@ -1,5 +1,5 @@
 
-#include "Types.hpp"
+//#include "Types.hpp"
 #include <iostream>
 #define bmp
 #pragma pack (push)

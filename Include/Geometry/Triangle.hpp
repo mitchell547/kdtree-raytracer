@@ -1,6 +1,6 @@
-#include "Vec.hpp"
-#include "Ray.hpp"
-#include "float3.h"
+#include "Include/Geometry/Vec.hpp"
+#include "Include/Geometry/Ray.hpp"
+#include "Include/Geometry/float3.h"
 #pragma once
 #define EPSILON 0.000001
 

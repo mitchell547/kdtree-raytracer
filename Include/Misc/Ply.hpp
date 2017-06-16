@@ -16,9 +16,9 @@
 #include <cmath>
 #include <string>
 //#include "Types.hpp"
-#include "Vec.hpp"
-#include "Triangle.hpp"
-#include "World.hpp"
+#include "../Geometry/Vec.hpp"
+#include "../Geometry/Triangle.hpp"
+#include "../World.hpp"
 //#define Vecf Vec
 //typedef Vec Vecf;
 typedef Vec3<float> Vecf;

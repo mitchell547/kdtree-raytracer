@@ -1,8 +1,8 @@
-#include "Vec.hpp"
+#include "Include/Geometry/Vec.hpp"
 #include <math.h>
 #include <stdio.h>
 #include <ctime>
-#include "raytracer_misc.h"
+#include "Include/raytracer_misc.h"
 #pragma once
 #pragma pack (push)
 #pragma pack(1)

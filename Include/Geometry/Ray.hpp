@@ -1,5 +1,5 @@
 //#include "Vec.hpp"
-#include "float3.h"
+#include "Include/Geometry/float3.h"
 #pragma once
 
 struct Ray

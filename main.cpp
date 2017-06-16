@@ -7,13 +7,13 @@
 #include <random>
 #include <iostream>
 #include <omp.h>
-#include "Vec.hpp"
-#include "Ray.hpp"
-#include "Triangle.hpp"
-#include "BMP.hpp"
-#include "raytracer_misc.h"
-#include "Ply.hpp"
-#include "World.hpp"
+#include "Include/Geometry/Vec.hpp"
+#include "Include/Geometry/Ray.hpp"
+#include "Include/Geometry/Triangle.hpp"
+#include "Include/Misc/BMP.hpp"
+#include "Include/Misc/Ply.hpp"
+#include "Include/raytracer_misc.h"
+#include "Include/World.hpp"
 #define EPSILON 0.000000001
 #define INF 1e20
 //#define standartTest //  or...
@@ -28,17 +28,17 @@
 #define REFLECTION_DEPTH 2
 #define TREE_DEPTH 1
 
-// (*) Выбор модели
-#define rabbit_model
-//#define cube_model
+// (*) Выбор модели (одна из)
+//#define rabbit_model
+#define cube_model
 
 // (*) Включение трассировки k-d дерева
-//#define kdtrace
+#define kdtrace
 
 
-#include "kdtree.h"
-#include "BasicRayTracer.h"
-#include "KDTreeRayTracer.h"
+#include "Include/kdtree.h"
+#include "Include/BasicRayTracer.h"
+#include "Include/KDTreeRayTracer.h"
 
 // Сцена с кубом
 Vec lights[] = { Vec (7, 70, 25),

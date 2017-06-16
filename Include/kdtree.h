@@ -1,5 +1,5 @@
-#include "AABB.h"
-#include "Triangle.hpp"
+#include "Include/Geometry/AABB.h"
+#include "Include/Geometry/Triangle.hpp"
 #include <algorithm>
 #include <stack>
 

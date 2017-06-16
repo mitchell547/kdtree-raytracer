@@ -1,6 +1,7 @@
 #include "Vec.hpp"
 #include "Ray.hpp"
 #include "Triangle.hpp"
+#include "float3.h"
 #include <algorithm>
 
 #pragma once
