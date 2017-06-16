@@ -5,14 +5,18 @@
 #include "Geometry\Ray.hpp"
 #include "BasicRayTracer.h"
 #include "kdtree.h"
+// Ray tracing with K-d tree
 // Трассировка с применением К-мерного дерева
 
+// Main rendering method
 // Основной метод рендеринга сцены (трассировка всех лучей и получение цветов всех пикселей)
 void SimpleRender (const  KDNode &root, const  world & wrld, const camera & cam, Vec c[], const imgSettings & img);
 
+// Single ray tracing
 // Трассировка конкретного луча по сцене (поиск пересечений, проверка освещённости, отражения луча)
 Vec RayTrace (const  KDNode &root, const  world  & wrld, const Ray & ray,unsigned int deep);
 
+// Check light source visibility
 // Проверка видимости источника света из точки пересечения
 inline   bool Visible (const KDNode & root, const  world & wrld, const float3 & hit, const Vec & light, const triangle & tri);
 
