@@ -21,6 +21,20 @@ Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep);
 // Проверка видимости источника света из точки пересечения
 inline   bool Visible (const  world & wrld, const Vec & hit, const Vec & light, const int & id);
 
+/*bool helpOrient (triangle t, Vec v1, Vec v2) {
+	Vec normalization = t.normal ();
+	double x1 = normalization.dot (v1 - t.p[0]);
+	double x2 = normalization.dot (v2 - t.p[0]);
+	return x1*x2 + EPSILON >= 0;
+}
+*/
+
+/*inline   Vec Shade (const Vec & hit, const Vec & light) {
+	//double ka = 0.1; //ambient coefficient
+	return Vec (0.3, 0.3, 0.3);
+}
+*/
+
 /*
 Return new reflected ray
 Получение отражённого луча
