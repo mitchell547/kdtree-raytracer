@@ -6,8 +6,8 @@
 #pragma once
 
 struct KDNode {
-	AABB box;	// ограничивающий параллелепипед узла
-	AXIS split_axis;	// ось, по которой разбивается узел
+	AABB box;	// ограничивающий параллелепипед узла (bounding box)
+	AXIS split_axis;	// ось, по которой разбивается узел 
 	float split_coord;	// координата плоскости разбиения
 	triangle * triangles;	// массив входящих в листовой узел треугольников
 	int tris_cnt;	
@@ -46,6 +46,7 @@ KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth) 
 	if (tri_cnt == 0) 
 		return &root;
 
+	// Calculate bounding box of whole scene
 	// Ищем ограничивающий бокс всей сцены и заодно центры треугольников
 	float3 * mid_points = new float3[tri_cnt];	// "центры" треугольников
 	AABB global_box = getTriangleAABB(triangles[0]); // бокс сцены
@@ -64,8 +65,11 @@ KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth) 
 	}
 
 	root.tris_cnt = 0;
-	// // Ищем оптимальное пересечение
 
+	// Search optimal splitting
+	// // Ищем оптимальное разбиение
+
+	// Take the longest side of bounding box
 	// Берём наибольшую длину бокса в качестве проверяемой оси
 	AXIS split_axis = X;	// ось, по которой будем разбивать на интервалы
 	float3 lengths = global_box.max - global_box.min;
@@ -73,8 +77,10 @@ KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth) 
 	if (lengths.v[Y] > lengths.v[split_axis]) split_axis = Y;
 	if (lengths.v[Z] > lengths.v[split_axis]) split_axis = Z;
 
+	// Look through possible splittings
 	// Перебераем возможные плоскости 
 
+	// Count the number of triangles in the bins
 	// Подсчитываем кол-во треугольников в интервалах
 	float step = lengths.v[split_axis] / BINS_CNT;
 	int * bins_sizes = new int[BINS_CNT];	// массив количеств треугольников в интервалах
@@ -92,6 +98,7 @@ KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth) 
 		}
 	}
 
+	// Calculate SAH for bins and choose the best plane
 	// Считаем SAH для интервалов и выбираем лучшую плоскость
 	float min_SAH = tri_cnt * getSurfaceArea(global_box);
 	float cur_SAH;
@@ -124,6 +131,7 @@ KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth) 
 	root.split_axis = split_axis;
 	root.split_coord = global_box.min.v[split_axis] + step * (split_plane + 1);
 
+	// Create left and right nodes
 	// // Формируем левые и правые узлы
 
 	printf("\n%d: %d / %d", depth, min_left_cnt, tri_cnt - min_left_cnt);
@@ -143,6 +151,7 @@ KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth) 
 
 	delete[] mid_points;
 
+	// Recursively create nodes
 	// Рекурсивно формируем узлы дерева
 	root.left = new KDNode();
 	root.left = buildKDTree(*root.left, l, min_left_cnt, depth-1);	
@@ -163,6 +172,8 @@ triangle* traceKDTree(const KDNode &root, const Ray &ray, float3 &pHit) {
 	};
 
 	float tmin, tmax, tsplit;
+
+	// Check the global bounding box
 	// Проверка глобального бокса
 	bool isIntersect = RayAABBIntersect(ray, root.box, tmin, tmax);
 	if (!isIntersect)
@@ -179,6 +190,7 @@ triangle* traceKDTree(const KDNode &root, const Ray &ray, float3 &pHit) {
 	// Трассируем, пока не достигнем результата
 	while (true) {
 
+		// Leaf node
 		// Листовой узел
 		while (node->left == nullptr && node->right == nullptr) {
 			float3 hit;		

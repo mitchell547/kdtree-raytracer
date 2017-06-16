@@ -12,12 +12,15 @@
 
 #pragma once
 
+// Main rendering method
 // Основной метод рендеринга сцены (трассировка всех лучей и получение цветов всех пикселей)
 void SimpleRender (const  world & wrld, const camera & cam, Vec c[], const imgSettings & img);
 
+// Single ray tracing
 // Трассировка конкретного луча по сцене (поиск пересечений, освещённость, отражения)
 Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep);
 
+// Check light source visibility
 // Проверка видимости источника света из точки пересечения
 inline   bool Visible (const  world & wrld, const Vec & hit, const Vec & light, const int & id);
 
