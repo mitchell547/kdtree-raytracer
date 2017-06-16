@@ -29,11 +29,11 @@
 #define TREE_DEPTH 1
 
 // (*) Выбор модели
-//#define rabbit_model
-#define cube_model
+#define rabbit_model
+//#define cube_model
 
 // (*) Включение трассировки k-d дерева
-#define kdtrace
+//#define kdtrace
 
 
 #include "kdtree.h"
@@ -307,9 +307,9 @@ int main (int argc, char *argv[])
 	rabbit.Load ("bun_zipper_res4.ply");
 	//camera cam (Ray (Vec (85, 55, 170), Vec (-0.45, -0.04, -1).normalization ()), Vec (w*.5135 / h));
 	camera cam (Ray (Vec (0, 70, 220), Vec (0, -0.25, -1).normalization ()), Vec (w*.5135 / h,0,0));
-	//int objCount = sizeof(obj) / sizeof(triangle);
-	//int lightsCount = 2;
-	world wrld; //= world (objCount, lightsCount, obj, lights);
+	int objCount = sizeof(obj) / sizeof(triangle);
+	int lightsCount = 2;
+	world wrld = world (objCount, lightsCount, obj, lights);
 	plyToMass (rabbit, wrld);
 
 	KDNode scene;
