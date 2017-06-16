@@ -6,10 +6,10 @@
 #pragma once
 
 struct KDNode {
-	AABB box;	// ограничивающий параллелепипед узла (bounding box)
-	AXIS split_axis;	// ось, по которой разбивается узел 
-	float split_coord;	// координата плоскости разбиения
-	triangle * triangles;	// массив входящих в листовой узел треугольников
+	AABB box;	// РѕРіСЂР°РЅРёС‡РёРІР°СЋС‰РёР№ РїР°СЂР°Р»Р»РµР»РµРїРёРїРµРґ СѓР·Р»Р° (bounding box)
+	AXIS split_axis;	// РѕСЃСЊ, РїРѕ РєРѕС‚РѕСЂРѕР№ СЂР°Р·Р±РёРІР°РµС‚СЃСЏ СѓР·РµР» 
+	float split_coord;	// РєРѕРѕСЂРґРёРЅР°С‚Р° РїР»РѕСЃРєРѕСЃС‚Рё СЂР°Р·Р±РёРµРЅРёСЏ
+	triangle * triangles;	// РјР°СЃСЃРёРІ РІС…РѕРґСЏС‰РёС… РІ Р»РёСЃС‚РѕРІРѕР№ СѓР·РµР» С‚СЂРµСѓРіРѕР»СЊРЅРёРєРѕРІ
 	int tris_cnt;	
 	KDNode * left;
 	KDNode * right;
@@ -47,9 +47,9 @@ KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth) 
 		return &root;
 
 	// Calculate bounding box of whole scene
-	// Ищем ограничивающий бокс всей сцены и заодно центры треугольников
-	float3 * mid_points = new float3[tri_cnt];	// "центры" треугольников
-	AABB global_box = getTriangleAABB(triangles[0]); // бокс сцены
+	// РС‰РµРј РѕРіСЂР°РЅРёС‡РёРІР°СЋС‰РёР№ Р±РѕРєСЃ РІСЃРµР№ СЃС†РµРЅС‹ Рё Р·Р°РѕРґРЅРѕ С†РµРЅС‚СЂС‹ С‚СЂРµСѓРіРѕР»СЊРЅРёРєРѕРІ
+	float3 * mid_points = new float3[tri_cnt];	// "С†РµРЅС‚СЂС‹" С‚СЂРµСѓРіРѕР»СЊРЅРёРєРѕРІ
+	AABB global_box = getTriangleAABB(triangles[0]); // Р±РѕРєСЃ СЃС†РµРЅС‹
 	mid_points[0] = (global_box.max + global_box.min) / 2.0;
 	for (int i = 1; i < tri_cnt; ++i) { 
 		AABB box = getTriangleAABB(triangles[i]);
@@ -67,23 +67,23 @@ KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth) 
 	root.tris_cnt = 0;
 
 	// Search optimal splitting
-	// // Ищем оптимальное разбиение
+	// // РС‰РµРј РѕРїС‚РёРјР°Р»СЊРЅРѕРµ СЂР°Р·Р±РёРµРЅРёРµ
 
 	// Take the longest side of bounding box
-	// Берём наибольшую длину бокса в качестве проверяемой оси
-	AXIS split_axis = X;	// ось, по которой будем разбивать на интервалы
+	// Р‘РµСЂС‘Рј РЅР°РёР±РѕР»СЊС€СѓСЋ РґР»РёРЅСѓ Р±РѕРєСЃР° РІ РєР°С‡РµСЃС‚РІРµ РїСЂРѕРІРµСЂСЏРµРјРѕР№ РѕСЃРё
+	AXIS split_axis = X;	// РѕСЃСЊ, РїРѕ РєРѕС‚РѕСЂРѕР№ Р±СѓРґРµРј СЂР°Р·Р±РёРІР°С‚СЊ РЅР° РёРЅС‚РµСЂРІР°Р»С‹
 	float3 lengths = global_box.max - global_box.min;
 
 	if (lengths.v[Y] > lengths.v[split_axis]) split_axis = Y;
 	if (lengths.v[Z] > lengths.v[split_axis]) split_axis = Z;
 
 	// Look through possible splittings
-	// Перебераем возможные плоскости 
+	// РџРµСЂРµР±РµСЂР°РµРј РІРѕР·РјРѕР¶РЅС‹Рµ РїР»РѕСЃРєРѕСЃС‚Рё 
 
 	// Count the number of triangles in the bins
-	// Подсчитываем кол-во треугольников в интервалах
+	// РџРѕРґСЃС‡РёС‚С‹РІР°РµРј РєРѕР»-РІРѕ С‚СЂРµСѓРіРѕР»СЊРЅРёРєРѕРІ РІ РёРЅС‚РµСЂРІР°Р»Р°С…
 	float step = lengths.v[split_axis] / BINS_CNT;
-	int * bins_sizes = new int[BINS_CNT];	// массив количеств треугольников в интервалах
+	int * bins_sizes = new int[BINS_CNT];	// РјР°СЃСЃРёРІ РєРѕР»РёС‡РµСЃС‚РІ С‚СЂРµСѓРіРѕР»СЊРЅРёРєРѕРІ РІ РёРЅС‚РµСЂРІР°Р»Р°С…
 	for (int i = 0; i < BINS_CNT; ++i)
 		bins_sizes[i] = 0;
 
@@ -99,12 +99,12 @@ KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth) 
 	}
 
 	// Calculate SAH for bins and choose the best plane
-	// Считаем SAH для интервалов и выбираем лучшую плоскость
+	// РЎС‡РёС‚Р°РµРј SAH РґР»СЏ РёРЅС‚РµСЂРІР°Р»РѕРІ Рё РІС‹Р±РёСЂР°РµРј Р»СѓС‡С€СѓСЋ РїР»РѕСЃРєРѕСЃС‚СЊ
 	float min_SAH = tri_cnt * getSurfaceArea(global_box);
 	float cur_SAH;
-	int split_plane;	// индекс наилучшей плоскости разбиения
+	int split_plane;	// РёРЅРґРµРєСЃ РЅР°РёР»СѓС‡С€РµР№ РїР»РѕСЃРєРѕСЃС‚Рё СЂР°Р·Р±РёРµРЅРёСЏ
 	int left_cnt = 0, right_cnt = tri_cnt;
-	int min_left_cnt = 0;	// количество треугольников слева от разбивающей плоскости
+	int min_left_cnt = 0;	// РєРѕР»РёС‡РµСЃС‚РІРѕ С‚СЂРµСѓРіРѕР»СЊРЅРёРєРѕРІ СЃР»РµРІР° РѕС‚ СЂР°Р·Р±РёРІР°СЋС‰РµР№ РїР»РѕСЃРєРѕСЃС‚Рё
 	float3 left_box = getSizes(global_box), right_box = getSizes(global_box);
 	left_box.v[split_axis] = 0;	// ?
 	
@@ -132,7 +132,7 @@ KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth) 
 	root.split_coord = global_box.min.v[split_axis] + step * (split_plane + 1);
 
 	// Create left and right nodes
-	// // Формируем левые и правые узлы
+	// // Р¤РѕСЂРјРёСЂСѓРµРј Р»РµРІС‹Рµ Рё РїСЂР°РІС‹Рµ СѓР·Р»С‹
 
 	printf("\n%d: %d / %d", depth, min_left_cnt, tri_cnt - min_left_cnt);
 
@@ -152,7 +152,7 @@ KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth) 
 	delete[] mid_points;
 
 	// Recursively create nodes
-	// Рекурсивно формируем узлы дерева
+	// Р РµРєСѓСЂСЃРёРІРЅРѕ С„РѕСЂРјРёСЂСѓРµРј СѓР·Р»С‹ РґРµСЂРµРІР°
 	root.left = new KDNode();
 	root.left = buildKDTree(*root.left, l, min_left_cnt, depth-1);	
 	delete[] l;
@@ -174,24 +174,24 @@ triangle* traceKDTree(const KDNode &root, const Ray &ray, float3 &pHit) {
 	float tmin, tmax, tsplit;
 
 	// Check the global bounding box
-	// Проверка глобального бокса
+	// РџСЂРѕРІРµСЂРєР° РіР»РѕР±Р°Р»СЊРЅРѕРіРѕ Р±РѕРєСЃР°
 	bool isIntersect = RayAABBIntersect(ray, root.box, tmin, tmax);
 	if (!isIntersect)
 		return nullptr;
 	
 	std::stack<TraceInfo> s;
 
-	const KDNode * node; // Текущий узел
+	const KDNode * node; // РўРµРєСѓС‰РёР№ СѓР·РµР»
 	node = &root;
 
 	float min_dist = INF;
 	const KDNode * hit_node = node;
 	int id;
-	// Трассируем, пока не достигнем результата
+	// РўСЂР°СЃСЃРёСЂСѓРµРј, РїРѕРєР° РЅРµ РґРѕСЃС‚РёРіРЅРµРј СЂРµР·СѓР»СЊС‚Р°С‚Р°
 	while (true) {
 
 		// Leaf node
-		// Листовой узел
+		// Р›РёСЃС‚РѕРІРѕР№ СѓР·РµР»
 		while (node->left == nullptr && node->right == nullptr) {
 			float3 hit;		
 			
@@ -217,7 +217,7 @@ triangle* traceKDTree(const KDNode &root, const Ray &ray, float3 &pHit) {
 				else
 					return nullptr;
 			}
-			// Возвращаем найденное пересечение, либо возвращаемся к стеку и трассируем дальше
+			// Р’РѕР·РІСЂР°С‰Р°РµРј РЅР°Р№РґРµРЅРЅРѕРµ РїРµСЂРµСЃРµС‡РµРЅРёРµ, Р»РёР±Рѕ РІРѕР·РІСЂР°С‰Р°РµРјСЃСЏ Рє СЃС‚РµРєСѓ Рё С‚СЂР°СЃСЃРёСЂСѓРµРј РґР°Р»СЊС€Рµ
 			//if (min_dist <= INF)
 			//	return &hit_node->triangles[id];
 			//else {

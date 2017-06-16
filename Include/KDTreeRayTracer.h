@@ -6,18 +6,18 @@
 #include "BasicRayTracer.h"
 #include "kdtree.h"
 // Ray tracing with K-d tree
-// Трассировка с применением К-мерного дерева
+// РўСЂР°СЃСЃРёСЂРѕРІРєР° СЃ РїСЂРёРјРµРЅРµРЅРёРµРј Рљ-РјРµСЂРЅРѕРіРѕ РґРµСЂРµРІР°
 
 // Main rendering method
-// Основной метод рендеринга сцены (трассировка всех лучей и получение цветов всех пикселей)
+// РћСЃРЅРѕРІРЅРѕР№ РјРµС‚РѕРґ СЂРµРЅРґРµСЂРёРЅРіР° СЃС†РµРЅС‹ (С‚СЂР°СЃСЃРёСЂРѕРІРєР° РІСЃРµС… Р»СѓС‡РµР№ Рё РїРѕР»СѓС‡РµРЅРёРµ С†РІРµС‚РѕРІ РІСЃРµС… РїРёРєСЃРµР»РµР№)
 void SimpleRender (const  KDNode &root, const  world & wrld, const camera & cam, Vec c[], const imgSettings & img);
 
 // Single ray tracing
-// Трассировка конкретного луча по сцене (поиск пересечений, проверка освещённости, отражения луча)
+// РўСЂР°СЃСЃРёСЂРѕРІРєР° РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ Р»СѓС‡Р° РїРѕ СЃС†РµРЅРµ (РїРѕРёСЃРє РїРµСЂРµСЃРµС‡РµРЅРёР№, РїСЂРѕРІРµСЂРєР° РѕСЃРІРµС‰С‘РЅРЅРѕСЃС‚Рё, РѕС‚СЂР°Р¶РµРЅРёСЏ Р»СѓС‡Р°)
 Vec RayTrace (const  KDNode &root, const  world  & wrld, const Ray & ray,unsigned int deep);
 
 // Check light source visibility
-// Проверка видимости источника света из точки пересечения
+// РџСЂРѕРІРµСЂРєР° РІРёРґРёРјРѕСЃС‚Рё РёСЃС‚РѕС‡РЅРёРєР° СЃРІРµС‚Р° РёР· С‚РѕС‡РєРё РїРµСЂРµСЃРµС‡РµРЅРёСЏ
 inline   bool Visible (const KDNode & root, const  world & wrld, const float3 & hit, const Vec & light, const triangle & tri);
 
 
@@ -50,7 +50,7 @@ inline   bool Visible (const KDNode & root, const  world & wrld, const float3 & 
 Vec RayTrace (const  KDNode &root, const  world  & wrld, const Ray & ray,unsigned int deep) {
 	Vec color (0, 0, 0);
 	int id = 0;
-	float3 hit;// найдем полигон
+	float3 hit;// РЅР°Р№РґРµРј РїРѕР»РёРіРѕРЅ
 	double distanse ;
 
 	triangle *tr = traceKDTree(root, ray, hit);
@@ -62,7 +62,7 @@ Vec RayTrace (const  KDNode &root, const  world  & wrld, const Ray & ray,unsigne
 
 	unsigned int lC = wrld.lightsCount;
 	for (unsigned int i = 0; i < lC; ++i)
-	{//проверим освещенность
+	{//РїСЂРѕРІРµСЂРёРј РѕСЃРІРµС‰РµРЅРЅРѕСЃС‚СЊ
 		bool isVisible = Visible(root, wrld, hit, wrld.lights[i], *tr);
 		if (isVisible)
 		{
@@ -79,7 +79,7 @@ Vec RayTrace (const  KDNode &root, const  world  & wrld, const Ray & ray,unsigne
 
 	//	
 
-	if (tr->reflect > 0 && deep > 0)//найдем отражение
+	if (tr->reflect > 0 && deep > 0)//РЅР°Р№РґРµРј РѕС‚СЂР°Р¶РµРЅРёРµ
 	{
 		Ray reflRay = reflect (ray, *tr, hit);
 		color = color*(1.0 - tr->reflect) + RayTrace(root, wrld, reflRay, deep--)*tr->reflect;

@@ -18,7 +18,7 @@
 
 
 // Render settings:
-// "Настройки" рендера:
+// "РќР°СЃС‚СЂРѕР№РєРё" СЂРµРЅРґРµСЂР°:
 
 //#define sampling	// antialiasing
 #define MOLLER_TRUMBORE_INTERSECT
@@ -26,12 +26,12 @@
 #define TREE_DEPTH 1
 
 // Choose model
-// (*) Выбор модели (одна из)
+// (*) Р’С‹Р±РѕСЂ РјРѕРґРµР»Рё (РѕРґРЅР° РёР·)
 //#define rabbit_model
 #define cube_model
 
 // Using k-d tree tracing
-// (*) Включение трассировки k-d дерева
+// (*) Р’РєР»СЋС‡РµРЅРёРµ С‚СЂР°СЃСЃРёСЂРѕРІРєРё k-d РґРµСЂРµРІР°
 #define kdtrace
 
 
@@ -40,7 +40,7 @@
 #include "Include/KDTreeRayTracer.h"
 
 // Cube model
-// Сцена с кубом
+// РЎС†РµРЅР° СЃ РєСѓР±РѕРј
 Vec lights[] = { Vec (7, 70, 25),
 				Vec (60, 7, 7) };
 triangle obj[] = {
@@ -278,21 +278,21 @@ triangle obj[] = {
 int main (int argc, char *argv[])
 {
 	// Image settings
-	// Параметры изображения
+	// РџР°СЂР°РјРµС‚СЂС‹ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ
 	//int w = 1024, h = 768;
 	//int w = 640, h = 480;
 	int w = 320, h = 240;
 	int samps = argc == 2 ? atoi (argv[1]) / 4 : 1; // # samples 
 	
 	// Output image
-	// Выходное изображение
+	// Р’С‹С…РѕРґРЅРѕРµ РёР·РѕР±СЂР°Р¶РµРЅРёРµ
 	Vec  r, *c = new Vec[w*h];
 	imgSettings img = imgSettings (w, h, samps);
 
 	// 3D Scenes:
-	// Сцены:
+	// РЎС†РµРЅС‹:
 
-	// // Модель кролика 
+	// // РњРѕРґРµР»СЊ РєСЂРѕР»РёРєР° 
 #ifdef rabbit_model
 	Model_PLY rabbit;
 	rabbit.Load ("bun_zipper_res4.ply");
@@ -310,7 +310,7 @@ int main (int argc, char *argv[])
 	fprintf (stderr, "\rBuild time %5.3f\n", build_f-build_s);
 #endif
 
-	// // Модель куба
+	// // РњРѕРґРµР»СЊ РєСѓР±Р°
 #ifdef cube_model
 	int objCount = sizeof(obj) / sizeof(triangle);
 	int lightsCount = sizeof(lights) / sizeof(Vec);
@@ -322,7 +322,7 @@ int main (int argc, char *argv[])
 #endif
 
 	// One triangle
-	// // Один треугольник перед камерой
+	// // РћРґРёРЅ С‚СЂРµСѓРіРѕР»СЊРЅРёРє РїРµСЂРµРґ РєР°РјРµСЂРѕР№
 	/*
 	camera cam (Ray (Vec (105, 44, 190), Vec (0, 1, -0.2).normalization ()), Vec (w*.5135 / h));
 	Vec light[] = {Vec(85, 45, 170)};
@@ -332,7 +332,7 @@ int main (int argc, char *argv[])
 	*/
 
 	// Rendering
-	// Рендеринг
+	// Р РµРЅРґРµСЂРёРЅРі
 	double start = omp_get_wtime ();
 	#ifndef kdtrace
 		SimpleRender(wrld, cam, c, img);	// Basic
@@ -344,7 +344,7 @@ int main (int argc, char *argv[])
 	fprintf (stderr, "\nElapsed time %5.3f", end-start);
 
 	// Output
-	// Вывод
+	// Р’С‹РІРѕРґ
 	writeToBmp (c, w, h);
 	getchar();
 }

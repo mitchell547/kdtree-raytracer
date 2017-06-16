@@ -13,15 +13,15 @@
 #pragma once
 
 // Main rendering method
-// Основной метод рендеринга сцены (трассировка всех лучей и получение цветов всех пикселей)
+// РћСЃРЅРѕРІРЅРѕР№ РјРµС‚РѕРґ СЂРµРЅРґРµСЂРёРЅРіР° СЃС†РµРЅС‹ (С‚СЂР°СЃСЃРёСЂРѕРІРєР° РІСЃРµС… Р»СѓС‡РµР№ Рё РїРѕР»СѓС‡РµРЅРёРµ С†РІРµС‚РѕРІ РІСЃРµС… РїРёРєСЃРµР»РµР№)
 void SimpleRender (const  world & wrld, const camera & cam, Vec c[], const imgSettings & img);
 
 // Single ray tracing
-// Трассировка конкретного луча по сцене (поиск пересечений, освещённость, отражения)
+// РўСЂР°СЃСЃРёСЂРѕРІРєР° РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ Р»СѓС‡Р° РїРѕ СЃС†РµРЅРµ (РїРѕРёСЃРє РїРµСЂРµСЃРµС‡РµРЅРёР№, РѕСЃРІРµС‰С‘РЅРЅРѕСЃС‚СЊ, РѕС‚СЂР°Р¶РµРЅРёСЏ)
 Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep);
 
 // Check light source visibility
-// Проверка видимости источника света из точки пересечения
+// РџСЂРѕРІРµСЂРєР° РІРёРґРёРјРѕСЃС‚Рё РёСЃС‚РѕС‡РЅРёРєР° СЃРІРµС‚Р° РёР· С‚РѕС‡РєРё РїРµСЂРµСЃРµС‡РµРЅРёСЏ
 inline   bool Visible (const  world & wrld, const Vec & hit, const Vec & light, const int & id);
 
 /*bool helpOrient (triangle t, Vec v1, Vec v2) {
@@ -40,7 +40,7 @@ inline   bool Visible (const  world & wrld, const Vec & hit, const Vec & light, 
 
 /*
 Return new reflected ray
-Получение отражённого луча
+РџРѕР»СѓС‡РµРЅРёРµ РѕС‚СЂР°Р¶С‘РЅРЅРѕРіРѕ Р»СѓС‡Р°
 */
 inline   Ray reflect (const Ray & r,const  triangle & obj,const Vec & hit) {
 	Vec normal = obj.normal ();
@@ -51,7 +51,7 @@ inline   Ray reflect (const Ray & r,const  triangle & obj,const Vec & hit) {
 	return reflect;
 }
 
-// Поиск пересечений луча с треугольниками сцены
+// РџРѕРёСЃРє РїРµСЂРµСЃРµС‡РµРЅРёР№ Р»СѓС‡Р° СЃ С‚СЂРµСѓРіРѕР»СЊРЅРёРєР°РјРё СЃС†РµРЅС‹
 inline   void intersect (const triangle * objects, const unsigned int objCount,
 	const Ray &r, double &t, int &id, float3 & hit, bool * isIntersect)
 {
@@ -120,7 +120,7 @@ Recursively trace the input ray with a light source and reflection
 Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
 	Vec color (0, 0, 0);
 	int id = 0;
-	float3 hit;// найдем полигон
+	float3 hit;// РЅР°Р№РґРµРј РїРѕР»РёРіРѕРЅ
 	double distanse ;
 
 	bool isIntersection = intersectHelper (wrld.objects, wrld.objCount, ray, distanse, id, hit);
@@ -133,7 +133,7 @@ Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
 
 	unsigned int lC = wrld.lightsCount;
 	for (unsigned int i = 0; i < lC; ++i)
-	{//проверим освещенность
+	{//РїСЂРѕРІРµСЂРёРј РѕСЃРІРµС‰РµРЅРЅРѕСЃС‚СЊ
 		bool isVisible = Visible (wrld, hit, wrld.lights[i], id);
 		if (isVisible)
 		{
@@ -150,7 +150,7 @@ Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
 
 	//	
 
-	if (tr.reflect > 0 && deep > 0)//найдем отражение
+	if (tr.reflect > 0 && deep > 0)//РЅР°Р№РґРµРј РѕС‚СЂР°Р¶РµРЅРёРµ
 	{
 		Ray reflRay = reflect (ray, tr, hit);
 		color = color*(1.0 - tr.reflect) + RayTrace (wrld, reflRay, deep--)*tr.reflect;
@@ -171,7 +171,7 @@ void SimpleRender (const  world & wrld, const camera & cam, Vec c[], const imgSe
 				double sx = 0.5, sy = 0.5;
 				double k = 1;				
 			#else
-				// Семплирование для антиалиасинга
+				// РЎРµРјРїР»РёСЂРѕРІР°РЅРёРµ РґР»СЏ Р°РЅС‚РёР°Р»РёР°СЃРёРЅРіР°
 				double k = .25;
 				for (unsigned int sy = 0; sy < 2; ++sy)     // 2x2 subpixel rows 
 					for (unsigned int sx = 0; sx < 2; ++sx) // 2x2 subpixel cols	
