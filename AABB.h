@@ -3,6 +3,8 @@
 #include "Triangle.hpp"
 #include <algorithm>
 
+#pragma once
+
 /*struct AABB {
 	Vec min;
 	Vec max;

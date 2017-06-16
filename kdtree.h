@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <stack>
 
+#pragma once
+
 struct KDNode {
 	AABB box;	// ограничивающий параллелепипед узла
 	AXIS split_axis;	// ось, по которой разбивается узел
@@ -182,8 +184,11 @@ triangle* traceKDTree(const KDNode &root, const Ray &ray, float3 &pHit) {
 			float3 hit;		
 			
 			for (int i = 0; i < node->tris_cnt; ++i) {
-				//if (node->triangles[i].intersect(ray, hit)) {
+			#ifndef MOLLER_TRUMBORE_INTERSECT
+				if (node->triangles[i].intersect(ray, hit)) {
+			#else
 				if (node->triangles[i].mollerTrumboreIntersect(ray, hit)) {
+			#endif
 					float dist = hit.distance(ray.o);
 					if (dist < min_dist) {
 						min_dist = dist;

@@ -12,10 +12,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AABB.h" />
+    <ClInclude Include="BasicRayTracer.h" />
     <ClInclude Include="BMP.hpp" />
     <ClInclude Include="fileSave.hpp" />
     <ClInclude Include="float3.h" />
     <ClInclude Include="kdtree.h" />
+    <ClInclude Include="KDTreeRayTracer.h" />
     <ClInclude Include="OBJ.hpp" />
     <ClInclude Include="Ply.hpp" />
     <ClInclude Include="Ray.hpp" />

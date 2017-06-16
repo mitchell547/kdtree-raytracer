@@ -1,4 +1,3 @@
-// triangle.cpp: определяет точку входа для консольного приложения.
 //
 //#include "cuda_runtime.h"
 //#include "device_launch_parameters.h"
@@ -19,69 +18,29 @@
 #define INF 1e20
 //#define standartTest //  or...
 //#define baricentTest
-//#define bmp
-#define sampleInCenter
-//#define filter
 
-//#define kdtrace
+
+
+// "Настройки" рендера:
+
+//#define sampling	// antialiasing
+#define MOLLER_TRUMBORE_INTERSECT
+#define REFLECTION_DEPTH 2
+#define TREE_DEPTH 1
+
+// (*) Выбор модели
+//#define rabbit_model
+#define cube_model
+
+// (*) Включение трассировки k-d дерева
+#define kdtrace
+
 
 #include "kdtree.h"
+#include "BasicRayTracer.h"
+#include "KDTreeRayTracer.h"
 
-/*struct camera {
-	Ray cameraLocation;
-	Vec cameraXangle;
-	Vec cameraYangle;
-	camera (Ray cameraLocation_, Vec cameraXangle_) :
-		cameraLocation (cameraLocation_),
-		cameraXangle (cameraXangle_) 
-	{
-		cameraYangle = (cameraXangle_.cross (cameraLocation_.d)).normalization ()*.5135;
-	}
-};
-*/
-/*
-struct imgSettings {
-	unsigned int w;//width
-	unsigned int h;//hight
-	unsigned int samps;//sampels per pixel
-	imgSettings (unsigned int w_, unsigned int h_, unsigned int samps_) :w (w_), h (h_), samps (samps_){}
-};
-*/
-/*
-struct world {
-	triangle*objects;
-	Vec	*lights;
-	unsigned int objCount;
-	unsigned int lightsCount;
-	world ();
-	world (const unsigned int objCount_, const unsigned int lightsCount_,
-		const triangle*objects_, const Vec	*lights_) :
-		objCount (objCount_),
-		lightsCount (lightsCount_)
-	{
-		objects = (triangle *)malloc (objCount_*sizeof(triangle));
-		lights = (Vec *)malloc (lightsCount_*sizeof(Vec));
-		for (unsigned int i = 0; i < objCount; ++i)
-			objects[i] = objects_[i];
-		for (unsigned int i = 0; i < lightsCount; ++i)
-			lights[i] = lights_[i];
-	}
-
-	void setObj (const triangle*objects_, const unsigned int objCount_)
-	{
-		objCount = objCount_;
-		objects = (triangle *)malloc (objCount_*sizeof(triangle));
-		for (unsigned int i = 0; i < objCount; ++i)
-			objects[i] = objects_[i];
-	}
-};
-*/
-
- //world CUDA_WORLD();
-//triangle * CUDA_objects;
-//enum Refl_t { DIFF, SPEC, REFR };  // material types, used in distanceiance() 
-
-
+// Сцена с кубом
 Vec lights[] = { Vec (7, 70, 25),
 				Vec (60, 7, 7) };
 triangle obj[] = {
@@ -314,400 +273,64 @@ triangle obj[] = {
 
 };
 
-/*Vec::Vec(float3 & b) {
-	x = b.v[0];
-	y = b.v[1];
-	z = b.v[2];
-}
-
-void Vec::operator=(const float3& b) {
-	x = b.v[0];
-	y = b.v[1];
-	z = b.v[2];
-}*/
-
-bool helpOrient (triangle t, Vec v1, Vec v2) {
+/*bool helpOrient (triangle t, Vec v1, Vec v2) {
 	Vec normalization = t.normal ();
 	double x1 = normalization.dot (v1 - t.p[0]);
 	double x2 = normalization.dot (v2 - t.p[0]);
 	return x1*x2 + EPSILON >= 0;
 }
-/*
-Returns true if input ray intersect some object
 */
 
-
-inline   void intersect (const triangle * objects, const unsigned int objCount,
-	const Ray &r, double &t, int &id, float3 & hit, bool * isIntersect)
-{
-	float3 localHit;
-	double  d; 
-	t = INF;
-	for (unsigned int i = objCount; i--;)
-	{
-		//bool isSpherIntersection = objects[i].intersectSpher (r);
-		//if (isSpherIntersection)
-		{
-			bool isIntersection = objects[i].intersect (r, localHit); 
-			//bool isIntersection = objects[i].mollerTrumboreIntersect(r, localHit); 
-			
-			if (isIntersection)
-			{
-				d = localHit.distance (r.o); 
-				if (d < t)
-				{
-					t = d;
-					id = i;
-					hit = localHit;
-				}
-			}
-		}
-	}
-	*isIntersect =  t < INF;
-}
-
-inline   bool intersectHelper (const triangle * objects, const unsigned int objCount,
-	const Ray &r, double &t, int &id, float3 & hit)
-{
-	bool  isIntersect = 0;
-	intersect (objects, objCount, r, t, id, hit, &isIntersect);
-	return isIntersect;
-}
-/*
-Returns true if the light source is visible
-*/
-// For standard raytracing
-inline   bool Visible (const  world & wrld, const Vec & hit, const Vec & light, const int & id)
-{
-	double distToLight = hit.distance (light);
-	float3 hit1;
-	Vec sub = light - hit;
-	Ray r (hit, sub);
-	double distanse;
-	int id1 = -1;
-	bool isIntersection = intersectHelper (wrld.objects, wrld.objCount, r, distanse, id1, hit1);
-	if (isIntersection)
-	{
-		if (id == id1)return true;
-		return false;
-	}
-	else return true;
-}
-
-// For K-d tree raytracing
-inline   bool Visible (const KDNode & root, const  world & wrld, const float3 & hit, const Vec & light, const triangle & tri)
-{
-	double distToLight = hit.distance (light);
-	float3 hit1;
-	Vec sub = light - hit;
-	Ray r (hit, sub);
-	double distanse;
-	int id1 = -1;
-	//bool isIntersection = intersectHelper (wrld.objects, wrld.objCount, r, distanse, id1, hit1);
-	triangle *tr = traceKDTree(root, r, hit1);
-	if (tr != nullptr)
-	{
-		bool eq = true;
-		for (int i = 0; i < 3; ++i)
-			if (tr->p[i] == tri.p[i]) {
-				eq = false;
-				break;
-			}
-		if (eq) return true;
-		return false;
-	}
-	else return true;
-}
-
-
-inline   Vec Shade (const Vec & hit, const Vec & light) {
+/*inline   Vec Shade (const Vec & hit, const Vec & light) {
 	//double ka = 0.1; //ambient coefficient
 	return Vec (0.3, 0.3, 0.3);
 }
-/*
-Return new reflected ray
 */
-inline   Ray reflect (const Ray & r,const  triangle & obj,const Vec & hit) {
-	Vec normal = obj.normal ();
-	Vec iV = hit - Vec(r.o);//inputVector
-	normal = normal.normalization ();
-	Vec rV = iV - ((normal*(iV.dot (normal))) * 2);//reflectVector
-	Ray reflect (hit, rV.normalization ());//new reflect ray
-	return reflect;
-}
-/*
-Recursively trace the input ray with a light source and reflection
-*/
-Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
-	Vec color (0, 0, 0);
-	int id = 0;
-	float3 hit;// найдем полигон
-	double distanse ;
-
-	bool isIntersection = intersectHelper (wrld.objects, wrld.objCount, ray, distanse, id, hit);
-	
-	if (!isIntersection)
-		return color;
-	triangle tr = wrld.objects[id];
-
-	color = tr.c;
-
-	unsigned int lC = wrld.lightsCount;
-	for (unsigned int i = 0; i < lC; ++i)
-	{//проверим освещенность
-		bool isVisible = Visible (wrld, hit, wrld.lights[i], id);
-		if (isVisible)
-		{
-			float3 light = wrld.lights[i] - hit;
-			double distancei = wrld.lights[i].distance (hit);
-			double cos = abs ((light.dot (tr.normal ().normalization ())) / (distancei));
-			color = color + color*(1 / (distancei*distancei));
-		}
-		else
-		{
-			color = color*0.2;
-		}
-	}
-
-	//	
-
-	if (tr.reflect > 0 && deep > 0)//найдем отражение
-	{
-		Ray reflRay = reflect (ray, tr, hit);
-		color = color*(1.0 - tr.reflect) + RayTrace (wrld, reflRay, deep--)*tr.reflect;
-	}
-	return color;
-}
-
-Vec KDTreeRayTrace (const  KDNode &root, const  world  & wrld, const Ray & ray,unsigned int deep) {
-	Vec color (0, 0, 0);
-	int id = 0;
-	float3 hit;// найдем полигон
-	double distanse ;
-
-	triangle *tr = traceKDTree(root, ray, hit);
-	
-	if (tr == nullptr)
-		return color;
-
-	color = tr->c;
-
-	unsigned int lC = wrld.lightsCount;
-	for (unsigned int i = 0; i < lC; ++i)
-	{//проверим освещенность
-		bool isVisible = Visible (root, wrld, hit, wrld.lights[i], *tr);
-		if (isVisible)
-		{
-			float3 light = wrld.lights[i] - hit;
-			double distancei = wrld.lights[i].distance (hit);
-			double cos = abs ((light.dot(tr->normal().normalization())) / (distancei));
-			color = color + color*(1 / (distancei*distancei));
-		}
-		else
-		{
-			color = color*0.2;
-		}
-	}
-
-	//	
-
-	if (tr->reflect > 0 && deep > 0)//найдем отражение
-	{
-		Ray reflRay = reflect (ray, *tr, hit);
-		color = color*(1.0 - tr->reflect) + KDTreeRayTrace (root, wrld, reflRay, deep--)*tr->reflect;
-	}
-	return color;
-}
-
-Ray * RenderRayHelper (const camera & cam, const imgSettings & img) {
-	Vec r;
-	int kFilter = 4;
-#ifdef sampleInCenter
-	kFilter = 1;
-#endif
-	int RaysCount = img.h*img.w*kFilter;
-	Ray * allRays = (Ray *)malloc (sizeof(Ray)*RaysCount);
-	int iii = 0;
-//#pragma omp parallel for schedule(dynamic, 1) private(r)       // OpenMP 
-	for (unsigned int y = 0; y < img.h; ++y) // Loop over image rows 
-	{
-		//fprintf (stderr, "\rRendering (%d spp) %5.2f%%", img.samps * 4, 100.*y / (img.h - 1));
-		for (unsigned int x = 0; x < img.w; ++x)   // Loop cols 
-		{
-			int i = (img.h - y - 1)*img.w + x;
-#ifdef sampleInCenter
-			double sx = 0.5, sy = 0.5;
-			double k = 1;
-#else
-			double k = .25;
-			for (unsigned int sy = 0; sy < 2; ++sy) // 2x2 subpixel rows 
-			for (unsigned int sx = 0; sx < 2; ++sx) // 2x2 subpixel cols	
-#endif
-			{
-				r = Vec ();
-				for (unsigned int sa = 0; sa < img.samps; ++sa)//quality of image
-				{
-#ifdef filter
-					double r1 = 2 * (double)rand () / (double)RAND_MAX, dx = r1 < 1 ? sqrt (r1) - 1 : 1 - sqrt (2 - r1);
-					double r2 = 2 * (double)rand () / (double)RAND_MAX, dy = r2 < 1 ? sqrt (r2) - 1 : 1 - sqrt (2 - r2);
-#else
-					double dx = 0, dy = 0;
-#endif
-					Vec d = cam.cameraXangle*(((sx + .5 + dx) / 2 + x) / img.w - .5) +
-							cam.cameraYangle*(((sy + .5 + dy) / 2 + y) / img.h - .5) +
-							cam.cameraLocation.d;
-					allRays[i] = Ray (cam.cameraLocation.o + d * 140, d.normalization ());
-					i++;
-				}
-			}
-
-		}
-	}
-	return allRays;
-}
-
-void renderNEW (const Ray * allRays, const  world & wrld, const imgSettings & img, Vec *c) {
-	Vec r;
-	for (int i = 0; i < img.h*img.w; i++)
-	{
-		fprintf (stderr, "\rRendering (%d spp) %5.2f%%", img.samps * 4, (100.*i )/ (img.h*img.w));
-	#ifdef sampleInCenter
-		for (unsigned int sa = 0; sa < img.samps; ++sa)//quality of image
-		{
-			r = r + RayTrace (wrld, allRays[i], 5)*(1. / img.samps);
-		}
-	#else
-		for (unsigned int sa = 0; sa < img.samps; ++sa)//quality of image
-		{
-			r = r + RayTrace (wrld, allRays[i*4], 5)*(1. / img.samps);
-			r = r + RayTrace (wrld, allRays[i*4+1], 5)*(1. / img.samps);
-			r = r + RayTrace (wrld, allRays[i*4+2], 5)*(1. / img.samps);
-			r = r + RayTrace (wrld, allRays[i*4+3], 5)*(1. / img.samps);
-		}
-		r = r*0.25;
-	#endif
-		c[i] = c[i] + Vec (clamp (r.x), clamp (r.y), clamp (r.z));
-	}
-}
-inline void Render (const  world & wrld, const camera & cam, Vec *c, const imgSettings & img)
-{
-	Vec r; 
-	int i = 0;
-	#pragma omp parallel for schedule(dynamic, 2) private(r)       
-	for (/*unsigned*/ int y = 0; y < img.h; ++y) // Loop over image rows 
-	{
-		fprintf (stderr, "\rRendering (%d spp) %5.2f%%", img.samps * 4, 100.*y / (img.h - 1));
-		for (unsigned int x = 0; x < img.w; ++x)   // Loop cols 
-		{
-			int i = y*img.w + x;	// use this with OpenMP
-			#ifdef sampleInCenter
-				double sx = 0.5, sy = 0.5;
-				double k = 1;				
-			#else
-				double k = .25;
-				for (unsigned int sy = 0; sy < 2; ++sy)     // 2x2 subpixel rows 
-				for (unsigned int sx = 0; sx < 2; ++sx) // 2x2 subpixel cols	
-			#endif
-			{
-				r = Vec ();
-				//for (unsigned int sa = 0; sa < img.samps; ++sa)// for distributed ray tracer
-				{
-					#ifdef filter
-						double r1 = 2 * (double)rand () / (double)RAND_MAX, dx = r1 < 1 ? sqrt (r1) - 1 : 1 - sqrt (2 - r1);
-						double r2 = 2 * (double)rand () / (double)RAND_MAX, dy = r2 < 1 ? sqrt (r2) - 1 : 1 - sqrt (2 - r2);
-					#else
-						double dx = 0, dy = 0;
-					#endif
-					Vec d = cam.cameraXangle*(((sx + .5 + dx) / 2 + x) / img.w - .5) +
-						cam.cameraYangle*(((sy + .5 + dy) / 2 + y) / img.h - .5) +
-						cam.cameraLocation.d;
-					r = r + RayTrace (wrld, Ray (cam.cameraLocation.o + d * 140, d.normalization ()), 5)*(1. / img.samps);
-				}
-				c[i] = c[i] + Vec (clamp (r.x), clamp (r.y), clamp (r.z))*k;
-				
-			}
-			i++;
-		}
-	}
-}
-
-#ifndef kdtrace
-void SimpleRender (const  world & wrld, const camera & cam, Vec c[], const imgSettings & img) {
-#else
-void SimpleRender (const  KDNode &root, const  world & wrld, const camera & cam, Vec c[], const imgSettings & img) {
-#endif
-	Vec r; 
-	int i = 0;
-	#pragma omp parallel for schedule(dynamic, 2) private(r, i)       
-	for (int y = img.h - 1; y >= 0; --y) { // Loop over image rows 
-		fprintf (stderr, "\rRemain (%d spp) %d lines ", 1, y);
-		for (int x = img.w - 1, i = y * img.w + x; x >= 0; --x, --i) {  // Loop cols 
-			//i = y * img.w + x;	// use this with OpenMP
-			#ifdef sampleInCenter
-				double sx = 0.5, sy = 0.5;
-				double k = 1;				
-			#else
-				double k = .25;
-				for (unsigned int sy = 0; sy < 2; ++sy)     // 2x2 subpixel rows 
-					for (unsigned int sx = 0; sx < 2; ++sx) // 2x2 subpixel cols	
-			#endif
-				{
-					r = Vec ();
-					//double dx = 0, dy = 0;
-					Vec d = cam.cameraXangle*(((sx + .5) / 2 + x) / img.w - .5) +
-						cam.cameraYangle*(((sy + .5) / 2 + y) / img.h - .5) +
-						cam.cameraLocation.d;
-
-				#ifndef kdtrace
-					r += RayTrace (wrld, Ray (cam.cameraLocation.o + d * 140, d.normalization ()), 1);//
-				#else
-					r += KDTreeRayTrace (root, wrld, Ray (cam.cameraLocation.o + d * 140, d.normalization ()), 1);
-				#endif
-
-					c[i] += Vec (clamp (r.x), clamp (r.y), clamp (r.z))*k;
-				}
-			//--i;
-		}
-	}
-}
 
 int main (int argc, char *argv[])
 {
+	// Параметры изображения
 	//int w = 1024, h = 768;
 	//int w = 640, h = 480;
 	int w = 320, h = 240;
 	int samps = argc == 2 ? atoi (argv[1]) / 4 : 1; // # samples 
 	
+	// Выходное изображение
 	Vec  r, *c = new Vec[w*h];
 	imgSettings img = imgSettings (w, h, samps);
 
-	// // Rabbit
+	// Сцены:
+
+	// // Модель кролика 
+#ifdef rabbit_model
 	Model_PLY rabbit;
 	rabbit.Load ("bun_zipper_res4.ply");
 	//camera cam (Ray (Vec (85, 55, 170), Vec (-0.45, -0.04, -1).normalization ()), Vec (w*.5135 / h));
 	camera cam (Ray (Vec (0, 70, 220), Vec (0, -0.25, -1).normalization ()), Vec (w*.5135 / h,0,0));
-	int objCount = sizeof(obj) / sizeof(triangle);
-	int lightsCount = 1;
-	world wrld = world (objCount, lightsCount, obj, lights);
+	//int objCount = sizeof(obj) / sizeof(triangle);
+	//int lightsCount = 2;
+	world wrld; //= world (objCount, lightsCount, obj, lights);
 	plyToMass (rabbit, wrld);
-	
+
 	KDNode scene;
 	double build_s = omp_get_wtime();
-	buildKDTree(scene, wrld.objects, wrld.objCount, 4);
+	buildKDTree(scene, wrld.objects, wrld.objCount, TREE_DEPTH);
 	double build_f = omp_get_wtime();
-	fprintf (stderr, "\rtime %5.3f\n", build_f-build_s);
-	
+	fprintf (stderr, "\rBuild time %5.3f\n", build_f-build_s);
+#endif
 
-	// // Cube
-	/*int objCount = sizeof(obj) / sizeof(triangle);
+	// // Модель куба
+#ifdef cube_model
+	int objCount = sizeof(obj) / sizeof(triangle);
 	int lightsCount = sizeof(lights) / sizeof(Vec);
 	camera cam (Ray (Vec (140, 45, 170), Vec (-0.7, -0.15, -1).normalization ()), Vec (w*.5135 / h));
 	world wrld = world (objCount, lightsCount, obj, lights);
 	
 	KDNode scene;
-	buildKDTree(scene, obj, objCount, 1);
-	*/
-	// // One triangle
+	buildKDTree(scene, obj, objCount, TREE_DEPTH);
+#endif
+
+	// // Один треугольник перед камерой
 	/*
 	camera cam (Ray (Vec (105, 44, 190), Vec (0, 1, -0.2).normalization ()), Vec (w*.5135 / h));
 	Vec light[] = {Vec(85, 45, 170)};
@@ -716,21 +339,18 @@ int main (int argc, char *argv[])
 	world wrld = world (1, 1, tri, light);
 	*/
 
-	//выделяем память для device копий для OBJECTS
-	//int size = objCount*sizeof(triangle);
-	//Ray * allRays = RenderRayHelper (cam, img);
-
+	// Рендеринг
 	double start = omp_get_wtime ();
-	//renderNEW (allRays, wrld, img, c);
-#ifndef kdtrace
-	SimpleRender(wrld, cam, c, img);
-#else
-	SimpleRender(scene, wrld, cam, c, img);
-#endif
+	#ifndef kdtrace
+		SimpleRender(wrld, cam, c, img);	// Basic
+	#else
+		SimpleRender(scene, wrld, cam, c, img);	// K-d tree
+	#endif
 	double end = omp_get_wtime ();
 
 	fprintf (stderr, "\nElapsed time %5.3f", end-start);
 
+	// Вывод
 	writeToBmp (c, w, h);
 	getchar();
 }
