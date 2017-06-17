@@ -23,12 +23,12 @@
 //#define sampling	// antialiasing
 #define MOLLER_TRUMBORE_INTERSECT
 #define REFLECTION_DEPTH 2
-#define TREE_DEPTH 1
+#define TREE_DEPTH 4
 
 // Choose model
 // (*) Выбор модели (одна из)
-#define rabbit_model
-//#define cube_model
+//#define rabbit_model
+#define cube_model
 
 // Using k-d tree tracing
 // (*) Включение трассировки k-d дерева

@@ -139,7 +139,7 @@ Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
 		{
 			float3 light = wrld.lights[i] - hit;
 			double distancei = wrld.lights[i].distance (hit);
-			double cos = abs ((light.dot (tr.normal ().normalization ())) / (distancei));
+			//double cos = abs ((light.dot (tr.normal ().normalization ())) / (distancei));
 			color = color + color*(1 / (distancei*distancei));
 		}
 		else
@@ -153,7 +153,7 @@ Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
 	if (tr.reflect > 0 && deep > 0)//найдем отражение
 	{
 		Ray reflRay = reflect (ray, tr, hit);
-		color = color*(1.0 - tr.reflect) + RayTrace (wrld, reflRay, --deep)*tr.reflect;
+		color = color*(1.0 - tr.reflect) + RayTrace (wrld, reflRay, deep-1)*tr.reflect;
 	}
 	return color;
 }

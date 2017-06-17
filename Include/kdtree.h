@@ -2,6 +2,7 @@
 #include "Include/Geometry/Triangle.hpp"
 #include <algorithm>
 #include <stack>
+#include "assert.h"
 
 #pragma once
 
@@ -48,8 +49,8 @@ KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth) 
 
 	// Calculate bounding box of whole scene
 	// Ищем ограничивающий бокс всей сцены и заодно центры треугольников
-	float3 * mid_points = new float3[tri_cnt];	// "центры" треугольников
-	AABB global_box = getTriangleAABB(triangles[0]); // бокс сцены
+	float3 * mid_points = new float3[tri_cnt];			// "центры" треугольников
+	AABB global_box = getTriangleAABB(triangles[0]);	// бокс сцены
 	mid_points[0] = (global_box.max + global_box.min) / 2.0;
 	for (int i = 1; i < tri_cnt; ++i) { 
 		AABB box = getTriangleAABB(triangles[i]);
@@ -89,11 +90,20 @@ KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth) 
 
 	float coord = global_box.min.v[split_axis];
 	for (int i = 0; i < tri_cnt; ++i) {
-		for (int j = 0; j < BINS_CNT; ++j) {
-			if (mid_points[i].v[split_axis] >= step * j + coord
-					&& mid_points[i].v[split_axis] <= step * (j+1) + coord) {
-				bins_sizes[j]++;
-				break;
+		float point = mid_points[i].v[split_axis];
+		if (point <= coord + step) {
+			bins_sizes[0]++;
+		} else if (point > coord + step * (BINS_CNT-1)) {
+			bins_sizes[BINS_CNT-1]++;
+		} else {
+			float l_off = coord, r_off = coord + step;
+			for (int j = 1; j < BINS_CNT-1; ++j) {
+				l_off = l_off + step;
+				r_off = r_off + step;
+				if (point > l_off && point <= r_off) {
+					bins_sizes[j]++;
+					break;
+				}
 			}
 		}
 	}
@@ -102,7 +112,7 @@ KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth) 
 	// Считаем SAH для интервалов и выбираем лучшую плоскость
 	float min_SAH = tri_cnt * getSurfaceArea(global_box);
 	float cur_SAH;
-	int split_plane;	// индекс наилучшей плоскости разбиения
+	int split_plane = -1;		// индекс наилучшей плоскости разбиения
 	int left_cnt = 0, right_cnt = tri_cnt;
 	int min_left_cnt = 0;	// количество треугольников слева от разбивающей плоскости
 	float3 left_box = getSizes(global_box), right_box = getSizes(global_box);
@@ -125,6 +135,7 @@ KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth) 
 			min_left_cnt = left_cnt;
 		}
 	}
+	assert(split_plane != -1);
 
 	delete[] bins_sizes;
 	
@@ -141,13 +152,16 @@ KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth) 
 	int lcnt = 0, rcnt = 0;
 	for (int i = 0; i < tri_cnt; ++i) {
 		if (mid_points[i].v[split_axis] <= root.split_coord) {
+			assert(lcnt < min_left_cnt);
 			l[lcnt] = triangles[i];
 			++lcnt;
 		} else {
+			assert(rcnt < tri_cnt - min_left_cnt);
 			r[rcnt] = triangles[i];
 			++rcnt;
 		}
 	}
+	assert(lcnt == min_left_cnt);
 
 	delete[] mid_points;
 
