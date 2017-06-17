@@ -77,7 +77,7 @@ void writeToBmp (Vec *c, const unsigned  int w, const unsigned int h)
 	}
 	fwrite (&first, sizeof(bmpinfo), 1, f);
 	int step = (w * 3 + 3) / 4 * 4;
-	unsigned char *data = new unsigned char[step*h];
+	//unsigned char *data = new unsigned char[step*h];
 	unsigned char pixel[3];
 	for (int i = 0; i < h; ++i)
 	{

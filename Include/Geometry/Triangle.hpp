@@ -156,8 +156,8 @@ struct triangle
 		float3 pvec = r.d.cross(p0p2);
 		float det = p0p1.dot(pvec);
 
-		//if (det < EPSILON) return false;	// culling
-		if (fabs(det) < EPSILON) return false;	//not culling
+		if (det < EPSILON) return false;	// culling
+		//if (fabs(det) < EPSILON) return false;	//not culling
 
 		float invDet = 1 / det;
 		float3 tvec = r.o - p[0];
@@ -172,7 +172,7 @@ struct triangle
 		hit = p[0] + tuv.v[1] * p0p1 + tuv.v[2] * p0p2;
 
 		//tuv.v[0] = p0p2.dot(qvec) * invDet; // distance from ray origin to intersection point
-
+		//if (p0p2.dot(qvec) * invDet < 0) return false;
 		return true;
 	}
 

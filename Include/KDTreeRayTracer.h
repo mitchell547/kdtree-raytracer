@@ -82,7 +82,7 @@ Vec RayTrace (const  KDNode &root, const  world  & wrld, const Ray & ray,unsigne
 	if (tr->reflect > 0 && deep > 0)//найдем отражение
 	{
 		Ray reflRay = reflect (ray, *tr, hit);
-		color = color*(1.0 - tr->reflect) + RayTrace(root, wrld, reflRay, deep--)*tr->reflect;
+		color = color*(1.0 - tr->reflect) + RayTrace(root, wrld, reflRay, --deep)*tr->reflect;
 	}
 	return color;
 }

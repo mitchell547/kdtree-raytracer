@@ -153,7 +153,7 @@ Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
 	if (tr.reflect > 0 && deep > 0)//найдем отражение
 	{
 		Ray reflRay = reflect (ray, tr, hit);
-		color = color*(1.0 - tr.reflect) + RayTrace (wrld, reflRay, deep--)*tr.reflect;
+		color = color*(1.0 - tr.reflect) + RayTrace (wrld, reflRay, --deep)*tr.reflect;
 	}
 	return color;
 }
