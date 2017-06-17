@@ -27,8 +27,8 @@
 
 // Choose model
 // (*) Выбор модели (одна из)
-//#define rabbit_model
-#define cube_model
+#define rabbit_model
+//#define cube_model
 
 // Using k-d tree tracing
 // (*) Включение трассировки k-d дерева

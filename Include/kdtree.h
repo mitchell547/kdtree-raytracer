@@ -212,7 +212,7 @@ triangle* traceKDTree(const KDNode &root, const Ray &ray, float3 &pHit) {
 			}
 
 			if (s.empty()) {
-				if (min_dist <= INF)
+				if (min_dist < INF)
 					return &hit_node->triangles[id];
 				else
 					return nullptr;

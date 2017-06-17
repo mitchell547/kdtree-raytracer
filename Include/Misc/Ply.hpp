@@ -301,4 +301,5 @@ void  plyToMass (Model_PLY  & model, world & wrld)
 
 
 	wrld.setObj (objects, objCount_);	
+	delete[] objects;
 }
