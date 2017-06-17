@@ -147,6 +147,7 @@ KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth) 
 
 	printf("\n%d: %d / %d", depth, min_left_cnt, tri_cnt - min_left_cnt);
 
+	// Проблема: если границы треугольника выходят за пределы его интервала, то он обрезается
 	triangle * l = new triangle[min_left_cnt];
 	triangle * r = new triangle[tri_cnt - min_left_cnt];
 	int lcnt = 0, rcnt = 0;
@@ -178,7 +179,9 @@ KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth) 
 	return &root;
 }
 
-triangle* traceKDTree(const KDNode &root, const Ray &ray, float3 &pHit) {
+triangle* traceKDTree(const KDNode &root, const Ray &ray, float3 &pHit, bool &edgeHit) {
+
+	edgeHit = false;
 
 	struct TraceInfo {
 		float tmax;
@@ -203,7 +206,11 @@ triangle* traceKDTree(const KDNode &root, const Ray &ray, float3 &pHit) {
 	int id;
 	// Трассируем, пока не достигнем результата
 	while (true) {
-
+		#ifdef TREE_VISUALISATION
+		if (RayEdgeIntersect(ray, node->box, tmin) || RayEdgeIntersect(ray, node->box, tmax))
+			edgeHit = true;
+		#endif
+		
 		// Leaf node
 		// Листовой узел
 		while (node->left == nullptr && node->right == nullptr) {

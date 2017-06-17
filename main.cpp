@@ -23,17 +23,19 @@
 //#define sampling	// antialiasing
 #define MOLLER_TRUMBORE_INTERSECT
 #define REFLECTION_DEPTH 2
-#define TREE_DEPTH 4
+#define TREE_DEPTH 2
 
 // Choose model
 // (*) Выбор модели (одна из)
 //#define rabbit_model
-#define cube_model
+//#define cube_model
+#define triangles_model
 
 // Using k-d tree tracing
 // (*) Включение трассировки k-d дерева
 #define kdtrace
 
+#define TREE_VISUALISATION	// для отладки
 
 #include "Include/kdtree.h"
 #include "Include/BasicRayTracer.h"
@@ -314,22 +316,26 @@ int main (int argc, char *argv[])
 #ifdef cube_model
 	int objCount = sizeof(obj) / sizeof(triangle);
 	int lightsCount = sizeof(lights) / sizeof(Vec);
-	camera cam (Ray (Vec (140, 45, 170), Vec (-0.7, -0.15, -1).normalization ()), Vec (w*.5135 / h));
+	//camera cam (Ray (Vec (140, 45, 170), Vec (-0.7, -0.15, -1).normalization ()), Vec (w*.5135 / h));
+	camera cam (Ray (Vec (112, 40, 120), Vec (-0.8, -0.2, -1).normalization ()), Vec (w*.5135 / h));
 	world wrld = world (objCount, lightsCount, obj, lights);
 	
 	KDNode scene;
 	buildKDTree(scene, obj, objCount, TREE_DEPTH);
 #endif
 
-	// One triangle
-	// // Один треугольник перед камерой
-	/*
+	// Two triangles
+	// // Два треугольника перед камерой
+#ifdef triangles_model
 	camera cam (Ray (Vec (105, 44, 190), Vec (0, 1, -0.2).normalization ()), Vec (w*.5135 / h));
 	Vec light[] = {Vec(85, 45, 170)};
 	triangle tri[] = {
-		triangle (Vec (85, 180, 120), Vec (105, 180, 150), Vec (65, 180, 190), Vec (.70, .10, .10), 0.1)};
-	world wrld = world (1, 1, tri, light);
-	*/
+		triangle (Vec (85, 180, 120), Vec (105, 180, 150), Vec (65, 180, 190), Vec (.70, .10, .10), 0.1),
+		triangle (Vec (85, 180, 120), Vec (105, 180, 150), Vec (65, 180, 190), Vec (.10, .10, .70), 0.1).moveX(20)};
+	world wrld = world (2, 1, tri, light);
+	KDNode scene;
+	buildKDTree(scene, wrld.objects, wrld.objCount, TREE_DEPTH);
+#endif
 
 	// Rendering
 	// Рендеринг

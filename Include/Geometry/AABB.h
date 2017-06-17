@@ -111,3 +111,23 @@ bool RayAABBIntersect(const Ray & ray, const AABB & box, float & tmin, float & t
  
 	return (tmin <= tmax) && (tmax > 0.f);
 }
+
+bool RayEdgeIntersect(const Ray & ray, const AABB & box, float thit) {
+	const float delta = 0.25;
+	float3 normdir = ray.d;
+	normdir.normalization();
+	float3 point = ray.o + normdir * thit;
+	AXIS axis[3][3] = {{X, Y, Z}, {Y, Z, X}, {Z, X, Y}};
+	float3 vertices[6] = {box.min, box.max, float3(box.max.v[X], box.min.v[Y], box.max.v[Z]), float3(box.min.v[X], box.max.v[Y], box.min.v[Z]),
+		float3(box.min.v[X], box.max.v[Y], box.max.v[Z]), float3(box.max.v[X], box.min.v[Y], box.min.v[Z])};
+	for (int j = 0; j < 6; ++j) {
+		float3 vertex = vertices[j];
+		for (int i = 0; i < 3; ++i) 
+			if (fabs(point.v[axis[i][0]] - vertex.v[axis[i][0]]) < delta 
+				&& fabs(point.v[axis[i][1]] - vertex.v[axis[i][1]]) < delta
+				&& point.v[axis[i][2]] >= box.min.v[axis[i][2]] && point.v[axis[i][2]] <= box.max.v[axis[i][2]])
+				return true;
+	}
+
+	return false;
+}

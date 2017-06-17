@@ -5,6 +5,7 @@
 #include "Geometry\Ray.hpp"
 #include "BasicRayTracer.h"
 #include "kdtree.h"
+#include "assert.h"
 // Ray tracing with K-d tree
 // Трассировка с применением К-мерного дерева
 
@@ -30,7 +31,8 @@ inline   bool Visible (const KDNode & root, const  world & wrld, const float3 & 
 	Ray r (hit, sub);
 	double distanse;
 	int id1 = -1;
-	triangle *tr = traceKDTree(root, r, hit1);
+	bool edgeHit;
+	triangle *tr = traceKDTree(root, r, hit1, edgeHit);
 	if (tr != nullptr)
 	{
 		bool eq = true;
@@ -52,14 +54,26 @@ Vec RayTrace (const  KDNode &root, const  world  & wrld, const Ray & ray,unsigne
 	int id = 0;
 	float3 hit;// найдем полигон
 	double distanse ;
-
-	triangle *tr = traceKDTree(root, ray, hit);
+	bool edgeHit;
 	
+	triangle *tr = traceKDTree(root, ray, hit, edgeHit);
+	
+	#ifdef TREE_VISUALISATION
+	if (edgeHit)
+		return Vec(0.8, 0.8, 0.8);
+	#endif
+
 	if (tr == nullptr)
 		return color;
-
+	
 	color = tr->c;
-
+	
+	//bool isIntersection = intersectHelper (wrld.objects, wrld.objCount, ray, distanse, id, hit);
+	/*for (int i = 0; i < 3; ++i)
+		if (tr->p[i] != wrld.objects[id].p[i]) {
+			assert(false);
+		}*/
+	
 	unsigned int lC = wrld.lightsCount;
 	for (unsigned int i = 0; i < lC; ++i)
 	{//проверим освещенность
