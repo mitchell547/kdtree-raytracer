@@ -68,12 +68,13 @@ Vec RayTrace (const  KDNode &root, const  world  & wrld, const Ray & ray,unsigne
 	
 	color = tr->c;
 	
-	//bool isIntersection = intersectHelper (wrld.objects, wrld.objCount, ray, distanse, id, hit);
-	/*for (int i = 0; i < 3; ++i)
+	/*bool isIntersection = intersectHelper (wrld.objects, wrld.objCount, ray, distanse, id, hit);
+	for (int i = 0; i < 3; ++i)
 		if (tr->p[i] != wrld.objects[id].p[i]) {
-			assert(false);
-		}*/
-	
+		//	assert(false);
+		}
+	*/
+
 	unsigned int lC = wrld.lightsCount;
 	for (unsigned int i = 0; i < lC; ++i)
 	{//проверим освещенность
@@ -124,7 +125,7 @@ void SimpleRender (const  KDNode &root, const  world & wrld, const camera & cam,
 						cam.cameraYangle*(((sy + .5) / 2 + y) / img.h - .5) +
 						cam.cameraLocation.d;
 
-					r += RayTrace(root, wrld, Ray (cam.cameraLocation.o + d * 140, d.normalization ()), REFLECTION_DEPTH);
+					r += RayTrace(root, wrld, Ray (cam.cameraLocation.o , d.normalization ()), REFLECTION_DEPTH);
 
 					c[i] += Vec (clamp (r.x), clamp (r.y), clamp (r.z))*k;
 				}

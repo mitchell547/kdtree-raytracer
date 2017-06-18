@@ -52,7 +52,7 @@ inline   Ray reflect (const Ray & r,const  triangle & obj,const Vec & hit) {
 }
 
 // Поиск пересечений луча с треугольниками сцены
-inline   void intersect (const triangle * objects, const unsigned int objCount,
+inline   void intersect (const triangle objects[], const unsigned int objCount,
 	const Ray &r, double &t, int &id, float3 & hit, bool * isIntersect)
 {
 	float3 localHit;
@@ -60,26 +60,23 @@ inline   void intersect (const triangle * objects, const unsigned int objCount,
 	t = INF;
 	for (unsigned int i = objCount; i--;)
 	{
-		//bool isSpherIntersection = objects[i].intersectSpher (r);
-		//if (isSpherIntersection)
-		{
-		#ifndef MOLLER_TRUMBORE_INTERSECT
-			bool isIntersection = objects[i].intersect (r, localHit); 
-		#else
-			bool isIntersection = objects[i].mollerTrumboreIntersect(r, localHit); 
-		#endif
+	#ifndef MOLLER_TRUMBORE_INTERSECT
+		bool isIntersection = objects[i].intersect (r, localHit); 
+	#else
+		bool isIntersection = objects[i].mollerTrumboreIntersect(r, localHit); 
+	#endif
 			
-			if (isIntersection)
+		if (isIntersection)
+		{
+			d = localHit.distance (r.o); 
+			if (d < t)
 			{
-				d = localHit.distance (r.o); 
-				if (d < t)
-				{
-					t = d;
-					id = i;
-					hit = localHit;
-				}
+				t = d;
+				id = i;
+				hit = localHit;
 			}
 		}
+		
 	}
 	*isIntersect =  t < INF;
 }
@@ -131,6 +128,9 @@ Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
 
 	color = tr.c;
 
+	//if (!tr.PointInTriangle(hit, tr.p[0], tr.p[1], tr.p[2]))
+	//	assert(false);
+	
 	unsigned int lC = wrld.lightsCount;
 	for (unsigned int i = 0; i < lC; ++i)
 	{//проверим освещенность
@@ -147,6 +147,7 @@ Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
 			color = color*0.2;
 		}
 	}
+	
 
 	//	
 
@@ -155,6 +156,7 @@ Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
 		Ray reflRay = reflect (ray, tr, hit);
 		color = color*(1.0 - tr.reflect) + RayTrace (wrld, reflRay, deep-1)*tr.reflect;
 	}
+	
 	return color;
 }
 
@@ -183,7 +185,7 @@ void SimpleRender (const  world & wrld, const camera & cam, Vec c[], const imgSe
 						cam.cameraYangle*(((sy + .5) / 2 + y) / img.h - .5) +
 						cam.cameraLocation.d;
 
-					r += RayTrace (wrld, Ray (cam.cameraLocation.o + d * 140, d.normalization ()), REFLECTION_DEPTH);//
+					r += RayTrace (wrld, Ray (cam.cameraLocation.o , d.normalization ()), REFLECTION_DEPTH);//
 
 					c[i] += Vec (clamp (r.x), clamp (r.y), clamp (r.z))*k;
 				}

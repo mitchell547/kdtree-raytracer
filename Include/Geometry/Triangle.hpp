@@ -1,6 +1,7 @@
 #include "Include/Geometry/Vec.hpp"
 #include "Include/Geometry/Ray.hpp"
 #include "Include/Geometry/float3.h"
+#include "assert.h"
 #pragma once
 #define EPSILON 0.000001
 
@@ -169,10 +170,12 @@ struct triangle
 		tuv.v[2] = r.d.dot(qvec) * invDet;
 		if (tuv.v[2] < 0 || tuv.v[1] + tuv.v[2] > 1) return false;
 
+		//float3 dnorm = r.d;
+		//hit = r.o + dnorm.normalization() * p0p2.dot(qvec) * invDet;
 		hit = p[0] + tuv.v[1] * p0p1 + tuv.v[2] * p0p2;
 
 		//tuv.v[0] = p0p2.dot(qvec) * invDet; // distance from ray origin to intersection point
-		//if (p0p2.dot(qvec) * invDet < 0) return false;
+		if (p0p2.dot(qvec) * invDet < 0) return false;
 		return true;
 	}
 
