@@ -28,12 +28,24 @@ inline   bool Visible (const KDNode & root, const  world & wrld, const float3 & 
 	double distToLight = hit.distance (light);
 	float3 hit1;
 	Vec sub = light - hit;
-	Ray r (hit, sub);
-	double distanse;
+	//Ray r (hit, sub);
+	sub.normalization();
+	Ray r (hit + sub * 0.001, sub);
+	double distance;
 	int id1 = -1;
 	bool edgeHit;
 	triangle *tr = traceKDTree(root, r, hit1, edgeHit);
-	if (tr != nullptr)
+	if (tr == nullptr)
+		return true;
+	else {
+		if (distToLight + EPSILON < r.o.distance(hit1))
+			return true;
+		for (int i = 0; i < 3; ++i)
+			if (tr->p[i] != tri.p[i]) 
+				return true;
+		return false;
+	}
+	/*if (tr != nullptr)
 	{
 		bool eq = true;
 		for (int i = 0; i < 3; ++i)
@@ -45,6 +57,7 @@ inline   bool Visible (const KDNode & root, const  world & wrld, const float3 & 
 		return false;
 	}
 	else return true;
+	*/
 }
 
 
@@ -53,7 +66,7 @@ Vec RayTrace (const  KDNode &root, const  world  & wrld, const Ray & ray,unsigne
 	Vec color (0, 0, 0);
 	int id = 0;
 	float3 hit;// найдем полигон
-	double distanse ;
+	//double distanse ;
 	bool edgeHit;
 	
 	triangle *tr = traceKDTree(root, ray, hit, edgeHit);
@@ -81,7 +94,7 @@ Vec RayTrace (const  KDNode &root, const  world  & wrld, const Ray & ray,unsigne
 		bool isVisible = Visible(root, wrld, hit, wrld.lights[i], *tr);
 		if (isVisible)
 		{
-			float3 light = wrld.lights[i] - hit;
+			//float3 light = wrld.lights[i] - hit;
 			double distancei = wrld.lights[i].distance (hit);
 			//double cos = abs ((light.dot(tr->normal().normalization())) / (distancei));
 			color = color + color*(1 / (distancei*distancei));

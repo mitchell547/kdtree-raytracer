@@ -48,7 +48,7 @@ inline   Ray reflect (const Ray & r,const  triangle & obj,const Vec & hit) {
 	normal = normal.normalization ();
 	Vec rV = iV - ((normal*(iV.dot (normal))) * 2);//reflectVector
 	rV.normalization();
-	Ray reflect (hit + rV*0.1, rV);//new reflect ray
+	Ray reflect (hit + rV*0.01, rV);//new reflect ray
 	return reflect;
 }
 
