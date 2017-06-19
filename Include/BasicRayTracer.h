@@ -47,13 +47,14 @@ inline   Ray reflect (const Ray & r,const  triangle & obj,const Vec & hit) {
 	Vec iV = hit - Vec(r.o);//inputVector
 	normal = normal.normalization ();
 	Vec rV = iV - ((normal*(iV.dot (normal))) * 2);//reflectVector
-	Ray reflect (hit, rV.normalization ());//new reflect ray
+	rV.normalization();
+	Ray reflect (hit + rV*0.1, rV);//new reflect ray
 	return reflect;
 }
 
 // Поиск пересечений луча с треугольниками сцены
-inline   void intersect (const triangle objects[], const unsigned int objCount,
-	const Ray &r, double &t, int &id, float3 & hit, bool * isIntersect)
+inline   bool findIntersection (const triangle objects[], const unsigned int objCount,
+	const Ray &r, double &t, int &id, float3 & hit)
 {
 	float3 localHit;
 	double  d; 
@@ -78,16 +79,16 @@ inline   void intersect (const triangle objects[], const unsigned int objCount,
 		}
 		
 	}
-	*isIntersect =  t < INF;
+	return t < INF;
 }
 
-inline   bool intersectHelper (const triangle * objects, const unsigned int objCount,
+/*inline   bool intersectHelper (const triangle * objects, const unsigned int objCount,
 	const Ray &r, double &t, int &id, float3 & hit)
 {
 	bool  isIntersect = 0;
 	intersect (objects, objCount, r, t, id, hit, &isIntersect);
 	return isIntersect;
-}
+}*/
 
 
 /*
@@ -99,16 +100,27 @@ inline   bool Visible (const  world & wrld, const Vec & hit, const Vec & light, 
 	double distToLight = hit.distance (light);
 	float3 hit1;
 	Vec sub = light - hit;
-	Ray r (hit, sub);
-	double distanse;
+	//Vec sub = hit - light;
+	sub.normalization();
+	Ray r (hit + sub * 0.001, sub);
+	//Ray r (hit, sub);
+	double distance;
 	int id1 = -1;
-	bool isIntersection = intersectHelper (wrld.objects, wrld.objCount, r, distanse, id1, hit1);
-	if (isIntersection)
+	bool isIntersection = findIntersection (wrld.objects, wrld.objCount, r, distance, id1, hit1);
+	if (!isIntersection)
+		return true;
+	else {
+		if (id == id1) return true;
+		if (distToLight + EPSILON < distance) return true;
+		return false;
+	}
+	/*if (isIntersection)
 	{
-		if (id == id1)return true;
+		if (id == id1) return true;
 		return false;
 	}
 	else return true;
+	*/
 }
 
 /*
@@ -118,9 +130,10 @@ Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
 	Vec color (0, 0, 0);
 	int id = 0;
 	float3 hit;// найдем полигон
-	double distanse ;
+	double distance ;
 
-	bool isIntersection = intersectHelper (wrld.objects, wrld.objCount, ray, distanse, id, hit);
+	//bool isIntersection = intersectHelper (wrld.objects, wrld.objCount, ray, distance, id, hit);
+	bool isIntersection = findIntersection (wrld.objects, wrld.objCount, ray, distance, id, hit);
 	
 	if (!isIntersection)
 		return color;
@@ -137,9 +150,10 @@ Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
 		bool isVisible = Visible (wrld, hit, wrld.lights[i], id);
 		if (isVisible)
 		{
-			float3 light = wrld.lights[i] - hit;
+			//float3 light = wrld.lights[i] - hit;
 			double distancei = wrld.lights[i].distance (hit);
 			//double cos = abs ((light.dot (tr.normal ().normalization ())) / (distancei));
+			
 			color = color + color*(1 / (distancei*distancei));
 		}
 		else
