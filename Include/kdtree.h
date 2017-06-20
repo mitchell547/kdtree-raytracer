@@ -6,7 +6,7 @@
 
 #pragma once
 
-struct KDNode {
+/*struct KDNode {
 	AABB box;	// ограничивающий параллелепипед узла (bounding box)
 	AXIS split_axis;	// ось, по которой разбивается узел 
 	float split_coord;	// координата плоскости разбиения
@@ -14,6 +14,21 @@ struct KDNode {
 	int tris_cnt;	
 	KDNode * left;
 	KDNode * right;
+};*/
+
+struct KDNode {
+	AXIS split_axis;	// ось, по которой разбивается узел 
+	float split_coord;	// координата плоскости разбиения
+	int left;
+	int right;
+};
+
+struct KDScene {
+	AABB scene_box;	
+	int lights_cnt;
+	KDNode* nodes;
+	float3* lights;
+	triangle* triangles;
 };
 
 KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth);

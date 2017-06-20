@@ -22,7 +22,7 @@
 
 //#define sampling	// antialiasing
 #define MOLLER_TRUMBORE_INTERSECT
-#define REFLECTION_DEPTH 1
+#define REFLECTION_DEPTH 2
 #define TREE_DEPTH 1
 
 // Choose model
