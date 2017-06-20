@@ -106,7 +106,7 @@ inline   bool findIntersection (const triangle objects[], const unsigned int obj
 Returns true if the light source is visible
 */
 // For standard raytracing
-inline   bool Visible (const  world & wrld, const Vec & hit, const Vec & light, const int & id)
+inline   bool Visible (const  world & wrld, const Vec & hit, const Vec & light, const int & id, float3 & bari)
 {
 	double distToLight = hit.distance (light);
 	float3 hit1;
@@ -116,7 +116,7 @@ inline   bool Visible (const  world & wrld, const Vec & hit, const Vec & light, 
 	Ray r (hit + sub * 0.001, sub);
 	//Ray r (hit, sub);
 	double distance;
-	float3 bari;
+	//float3 bari;
 	int id1 = -1;
 	bool isIntersection = findIntersection (wrld.objects, wrld.objCount, r, distance, id1, hit1, bari);
 	if (!isIntersection)
@@ -135,15 +135,15 @@ inline   bool Visible (const  world & wrld, const Vec & hit, const Vec & light, 
 	*/
 }
 
-float3 calculateLighting(const  world & wrld, const Vec & hit, const int & id, const float3 & bari) {
+float3 calculateLighting(const  world & wrld, const Ray & ray, const Vec & hit, const int & id, const float3 & bari) {
 	triangle tri = wrld.objects[id];
 	float3 color = tri.c;
 	float3 diffuse, specular;
-	//float3 _bari;
+	float3 _bari;
 	unsigned int lC = wrld.lightsCount;
 	for (unsigned int i = 0; i < lC; ++i)
 	{//проверим освещенность
-		bool isVisible = Visible (wrld, hit, wrld.lights[i], id);
+		bool isVisible = Visible (wrld, hit, wrld.lights[i], id, _bari);
 		if (isVisible)
 		{
 			float3 light_dir = (wrld.lights[i] - hit).normalization();
@@ -155,8 +155,11 @@ float3 calculateLighting(const  world & wrld, const Vec & hit, const int & id, c
 			//color = color + 0.2*color*max(0, face_normal.dot(light_dir));
 			diffuse = diffuse + color * max(0, face_normal.dot(light_dir)) *  wrld.objects[id].diffuse;
 
-
-			
+			float3 view_d = ray.d.norm(), 
+				refl_d = reflect(ray, wrld.objects[id], hit, _bari).d.norm();
+			float prod = max(0, view_d.dot(refl_d)); 
+			float spec = pow(prod, wrld.objects[id].specular) * wrld.objects[id].specular;
+			specular += float3(spec, spec, spec);
 		}
 		else
 		{
@@ -189,9 +192,8 @@ Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
 	//float facing = max(0, hitNormal.norm().dot((float3()-ray.d).norm()));
 	//color = float3(facing, facing, facing);
 	color = tr.c * 0.2;	// ambient
-	if (color.v[X] < 0.01 && color.v[Y] < 0.01 && color.v[Z] < 0.02)
-		int aaa = 1;
-	color += calculateLighting(wrld, hit, id, bari);
+
+	color += calculateLighting(wrld, ray, hit, id, bari);
 	
 
 	if (tr.reflect > 0 && deep > 0)//найдем отражение
@@ -199,7 +201,7 @@ Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
 		Ray reflRay = reflect (ray, tr, hit, bari);
 		color = color*(1.0 - tr.reflect) + RayTrace (wrld, reflRay, deep-1)*tr.reflect;
 	}
-	//color += calculateLighting(wrld, hit, id, bari);
+	//color += calculateLighting(wrld, ray hit, id, bari);
 	return color;
 }
 

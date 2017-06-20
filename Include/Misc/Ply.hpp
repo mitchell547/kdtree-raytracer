@@ -271,9 +271,9 @@ FILE * Model_PLY::openFile(char* filename)
 
 void  plyToMass (Model_PLY  & model, world & wrld)
 {
-	const float REFLECTION = 0.7;
+	const float REFLECTION = 0.9;
 	triangle * objects;
-	unsigned int objCount_ = model.TotalFaces + 10;
+	unsigned int objCount_ = model.TotalFaces + 12;
 	
 	objects = (triangle *)malloc((objCount_) * sizeof(triangle));
 	int tr = 0;
@@ -290,6 +290,7 @@ void  plyToMass (Model_PLY  & model, world & wrld)
 			a.v_n[j].v[Y] = model.faces_out[i].normals[j].y;
 			a.v_n[j].v[Z] = model.faces_out[i].normals[j].z;
 		}
+		a.specular = 0.3;
 		/*triangle a = triangle (model.Faces_Triangles[tr] * 200, 
 			model.Faces_Triangles[tr + 1] * 200, 
 			model.Faces_Triangles[tr + 2] * 200, Vec (inten, inten, inten), 0);
@@ -299,22 +300,26 @@ void  plyToMass (Model_PLY  & model, world & wrld)
 		tr += 3;
 	}
 
-	objects[objCount_ - 10] = triangle (Vec (70, 5, -100), Vec (70, 5, 100), Vec (70, 105, -100), Vec (0, 0.3, 0), 0).moveZ (10);
+	objects[objCount_ - 12] = triangle (Vec (-70, 75, -100), Vec (-70, 75, 100), Vec (70, 75, 100), Vec (0.5, 0.5, 0.1), 0).moveZ (10);//потолок
+	objects[objCount_ - 11] = triangle (Vec (-70, 75, -100), Vec (70, 75, 100), Vec (70, 75, -100), Vec (0.5, 0.5, 0.1), 0).moveZ (10);
+
+	objects[objCount_ - 10] = triangle (Vec (70, 5, -100), Vec (70, 5, 100), Vec (70, 105, -100), Vec (0, 0.3, 0), 0).moveZ (10); // правая плоскость
 	objects[objCount_ - 9] = triangle (Vec (70, 5, 100), Vec (70, 105, 100), Vec (70, 105, -100), Vec (0, 0.3, 0), 0).moveZ (10);
 
-	objects[objCount_ - 8] = triangle (Vec (-70, 5, -100), Vec (-70, 105, -100), Vec (-70, 5, 100), Vec (0.3, 0, 0), 0).moveZ (10);
+	objects[objCount_ - 8] = triangle (Vec (-70, 5, -100), Vec (-70, 105, -100), Vec (-70, 5, 100), Vec (0.3, 0, 0), 0).moveZ (10); // левая плоскость
 	objects[objCount_ - 7] = triangle (Vec (-70, 5, 100), Vec (-70, 105, -100), Vec (-70, 105, 100), Vec (0.3, 0, 0), 0).moveZ (10);
 
 	objects[objCount_ - 6] = triangle (Vec (-70, 105, -100), Vec (-70, 105, 100), Vec (70, 105, 100), Vec (0.02, 0.02, 0.02), 0).moveZ (10);
 	objects[objCount_ - 5] = triangle (Vec (-70, 105, -100), Vec (70, 105, -100), Vec (70, 105, 100), Vec (0.02, 0.02, 0.02), 0).moveZ (10);
-	triangle b = triangle (Vec (-70, 105, -100), Vec (70, 5, -100), Vec (70, 105, -100), Vec (0.1, 0.1, 0.1), 0.6).moveZ (10);
+	triangle b = triangle (Vec (-70, 105, -100), Vec (70, 5, -100), Vec (70, 105, -100), Vec (0.1, 0.1, 0.1), 0.8).moveZ (10);
 	//b.diffuse = 0;
 	objects[objCount_ - 4] = b;
-	b = triangle (Vec (-70, 5, -100), Vec (70, 5, -100), Vec (-70, 105, -100), Vec (0.1, 0.1, 0.1), 0.6).moveZ (10);
+	b = triangle (Vec (-70, 5, -100), Vec (70, 5, -100), Vec (-70, 105, -100), Vec (0.1, 0.1, 0.1), 0.9).moveZ (10);	// задняя плоскость
 	//b.diffuse = 0;
 	objects[objCount_ - 3] = b;
-	objects[objCount_ - 2] = triangle (Vec (-70, 5, -100), Vec (-70, 5, 100), Vec (70, 5, 100), Vec (0.01, 0.01, 0.02), 0).moveZ (10);//пол
-	objects[objCount_ - 1] = triangle (Vec (-70, 5, -100), Vec (70, 5, 100), Vec (70, 5, -100), Vec (0.01, 0.01, 0.02), 0).moveZ (10);
+	objects[objCount_ - 2] = triangle (Vec (-70, 5, -100), Vec (-70, 5, 100), Vec (70, 5, 100), Vec (0.0, 0.1, 0.3), 0).moveZ (10).moveY(2);//пол
+	objects[objCount_ - 1] = triangle (Vec (-70, 5, -100), Vec (70, 5, 100), Vec (70, 5, -100), Vec (0.0, 0.05, 0.25), 0).moveZ (10).moveY(2);
+	
 
 
 	wrld.setObj (objects, objCount_);	
