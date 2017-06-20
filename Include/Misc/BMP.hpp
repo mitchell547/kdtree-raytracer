@@ -88,8 +88,7 @@ void writeToBmp (Vec *c, const unsigned  int w, const unsigned int h)
 			pixel[0] = toChar (c[i*w + j].z);
 			pixel[1] = toChar (c[i*w + j].y);
 			pixel[2] = toChar (c[i*w + j].x);
-			if (pixel[0] == 0 && pixel[1] == 0 && pixel[2] == 0)
-				int aaa =1;
+
 			//pixel[3] = 0;
 			fwrite(pixel, sizeof(unsigned char) * 3, 1, f);
 			

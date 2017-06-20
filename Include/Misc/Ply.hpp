@@ -76,26 +76,6 @@ int Model_PLY::Load (char* filename) {
 	this->TotalConnectedQuads = 0;
 	this->TotalConnectedPoints = 0;
 
-	/*char* pch = strstr (filename, ".ply");
-	if (pch == NULL) {
-		printf ("File does not have a .PLY extension. ");
-		return -1;
-	}
-
-	FILE* file = fopen (filename, "r");
-
-	if (file == NULL) {
-		printf ("File can't be opened\n"); 
-		return -1;
-	}
-
-	char header[5];
-	fscanf(file, "%s", header);
-	if (strcmp(header, "ply") != 0)	{
-		printf("The file is not in a PLY format\n");
-		return -1;
-	}*/
-
 	FILE* file = this->openFile(filename);
 	if (file == NULL)
 		return -1;

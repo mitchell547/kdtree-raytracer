@@ -24,20 +24,6 @@ Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep);
 // Проверка видимости источника света из точки пересечения
 inline   bool Visible (const  world & wrld, const Vec & hit, const Vec & light, const int & id);
 
-/*bool helpOrient (triangle t, Vec v1, Vec v2) {
-	Vec normalization = t.normal ();
-	double x1 = normalization.dot (v1 - t.p[0]);
-	double x2 = normalization.dot (v2 - t.p[0]);
-	return x1*x2 + EPSILON >= 0;
-}
-*/
-
-/*inline   Vec Shade (const Vec & hit, const Vec & light) {
-	//double ka = 0.1; //ambient coefficient
-	return Vec (0.3, 0.3, 0.3);
-}
-*/
-
 float facingRatio(const triangle & tr, const Ray & ray) {
 	return max(0, tr._normal.norm().dot((float3()-ray.d).norm()));
 }
@@ -93,14 +79,6 @@ inline   bool findIntersection (const triangle objects[], const unsigned int obj
 	return t < INF;
 }
 
-/*inline   bool intersectHelper (const triangle * objects, const unsigned int objCount,
-	const Ray &r, double &t, int &id, float3 & hit)
-{
-	bool  isIntersect = 0;
-	intersect (objects, objCount, r, t, id, hit, &isIntersect);
-	return isIntersect;
-}*/
-
 
 /*
 Returns true if the light source is visible
@@ -126,13 +104,7 @@ inline   bool Visible (const  world & wrld, const Vec & hit, const Vec & light, 
 		if (distToLight + EPSILON < distance) return true;
 		return false;
 	}
-	/*if (isIntersection)
-	{
-		if (id == id1) return true;
-		return false;
-	}
-	else return true;
-	*/
+
 }
 
 float3 calculateLighting(const  world & wrld, const Ray & ray, const Vec & hit, const int & id, const float3 & bari) {
@@ -148,9 +120,10 @@ float3 calculateLighting(const  world & wrld, const Ray & ray, const Vec & hit, 
 		{
 			float3 light_dir = (wrld.lights[i] - hit).normalization();
 			double distancei = wrld.lights[i].distance (hit);
-			//double cos = abs ((light.dot (tr.normal ().normalization ())) / (distancei));
+			
 			//float3 face_normal = wrld.objects[id]._normal;
 			float3 face_normal = smoothNormal(wrld.objects[id].v_n, bari);
+			
 			//color = color + color*(1 / (distancei*distancei));
 			//color = color + 0.2*color*max(0, face_normal.dot(light_dir));
 			diffuse = diffuse + color * max(0, face_normal.dot(light_dir)) *  wrld.objects[id].diffuse;
@@ -178,23 +151,15 @@ Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
 	float3 hit, bari;// найдем полигон
 	double distance ;
 	
-	//bool isIntersection = intersectHelper (wrld.objects, wrld.objCount, ray, distance, id, hit);
 	bool isIntersection = findIntersection (wrld.objects, wrld.objCount, ray, distance, id, hit, bari);
 	
 	if (!isIntersection)
 		return color;
 	triangle tr = wrld.objects[id];
-	//if (!tr.PointInTriangle(hit, tr.p[0], tr.p[1], tr.p[2]))
-	//	assert(false);
 
-	//float3 hitNormal = (1 - bari.v[0] - bari.v[1]) * tr.v_n[0] + bari.v[0] * tr.v_n[1] + bari.v[1] * tr.v_n[2]; // smoothed normal
-	//float3 hitNormal = smoothNormal(tr.v_n, bari);
-	//float facing = max(0, hitNormal.norm().dot((float3()-ray.d).norm()));
-	//color = float3(facing, facing, facing);
 	color = tr.c * 0.2;	// ambient
 
-	color += calculateLighting(wrld, ray, hit, id, bari);
-	
+	color += calculateLighting(wrld, ray, hit, id, bari);	// diffuse and specular
 
 	if (tr.reflect > 0 && deep > 0)//найдем отражение
 	{

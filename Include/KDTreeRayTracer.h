@@ -45,19 +45,7 @@ inline   bool Visible (const KDNode & root, const  world & wrld, const float3 & 
 				return true;
 		return false;
 	}
-	/*if (tr != nullptr)
-	{
-		bool eq = true;
-		for (int i = 0; i < 3; ++i)
-			if (tr->p[i] == tri.p[i]) {
-				eq = false;
-				break;
-			}
-		if (eq) return true;
-		return false;
-	}
-	else return true;
-	*/
+
 }
 
 
