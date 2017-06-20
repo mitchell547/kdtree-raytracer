@@ -152,9 +152,8 @@ struct triangle
 
 	
 
-	inline bool mollerTrumboreIntersect(const Ray &r, float3 & hit, float3 & baricentric) const {
-		// 't' is unused, so mb do u = uv.v[0], v = uv.v[1]
-		float3 tuv;
+	inline bool mollerTrumboreIntersect(const Ray &r, float3 & hit, float3 & uv) const {
+		//float3 uv;
 		float3 p0p1 = p[1] - p[0];
 		float3 p0p2 = p[2] - p[0];
 		float3 pvec = r.d.cross(p0p2);
@@ -166,20 +165,19 @@ struct triangle
 		float invDet = 1 / det;
 		float3 tvec = r.o - p[0];
 
-		tuv.v[1] = tvec.dot(pvec) * invDet;
-		if (tuv.v[1] < 0 || tuv.v[1] > 1) return false;
+		uv.v[0] = tvec.dot(pvec) * invDet;
+		if (uv.v[0] < 0 || uv.v[0] > 1) return false;
 
 		float3 qvec = tvec.cross(p0p1);
-		tuv.v[2] = r.d.dot(qvec) * invDet;
-		if (tuv.v[2] < 0 || tuv.v[1] + tuv.v[2] > 1) return false;
+		uv.v[1] = r.d.dot(qvec) * invDet;
+		if (uv.v[1] < 0 || uv.v[0] + uv.v[1] > 1) return false;
 
 		//tuv.v[0] = p0p2.dot(qvec) * invDet; // distance from ray origin to intersection point
 		if (p0p2.dot(qvec) * invDet < 0) return false;
 
 		//float3 dnorm = r.d;
 		//hit = r.o + dnorm.normalization() * p0p2.dot(qvec) * invDet;
-		hit = p[0] + tuv.v[1] * p0p1 + tuv.v[2] * p0p2;
-		baricentric = tuv;
+		hit = p[0] + uv.v[0] * p0p1 + uv.v[1] * p0p2;
 		return true;
 	}
 

@@ -54,9 +54,9 @@ inline   Ray reflect (const Ray & r,const  triangle & obj,const Vec & hit) {
 
 // Поиск пересечений луча с треугольниками сцены
 inline   bool findIntersection (const triangle objects[], const unsigned int objCount,
-	const Ray &r, double &t, int &id, float3 & hit, float3 & baricentric)
+	const Ray &r, double &t, int &id, float3 & hit, float3 & bari)
 {
-	float3 localHit, bari;
+	float3 localHit, uv;
 	double  d; 
 	t = INF;
 	for (unsigned int i = objCount; i--;)
@@ -64,7 +64,7 @@ inline   bool findIntersection (const triangle objects[], const unsigned int obj
 	#ifndef MOLLER_TRUMBORE_INTERSECT
 		bool isIntersection = objects[i].intersect (r, localHit); 
 	#else
-		bool isIntersection = objects[i].mollerTrumboreIntersect(r, localHit, bari); 
+		bool isIntersection = objects[i].mollerTrumboreIntersect(r, localHit, uv); 
 	#endif
 			
 		if (isIntersection)
@@ -75,6 +75,7 @@ inline   bool findIntersection (const triangle objects[], const unsigned int obj
 				t = d;
 				id = i;
 				hit = localHit;
+				bari = uv;
 			}
 		}
 		
@@ -163,7 +164,7 @@ Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
 	int id = 0;
 	float3 hit, bari;// найдем полигон
 	double distance ;
-
+	
 	//bool isIntersection = intersectHelper (wrld.objects, wrld.objCount, ray, distance, id, hit);
 	bool isIntersection = findIntersection (wrld.objects, wrld.objCount, ray, distance, id, hit, bari);
 	
@@ -173,12 +174,12 @@ Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
 	//if (!tr.PointInTriangle(hit, tr.p[0], tr.p[1], tr.p[2]))
 	//	assert(false);
 
-	float3 hitNormal = (1 - bari.v[1] - bari.v[2]) * tr.v_n[0] + bari.v[1] * tr.v_n[1] + bari.v[2] * tr.v_n[2]; // smoothed normal
+	float3 hitNormal = (1 - bari.v[0] - bari.v[1]) * tr.v_n[0] + bari.v[0] * tr.v_n[1] + bari.v[1] * tr.v_n[2]; // smoothed normal
 	//float3 hitNormal = smoothNormal(tr.v_n, bari);
-	//float facing = max(0, hitNormal.norm().dot((float3()-ray.d).norm()));
-	//color = float3(facing, facing, facing);
+	float facing = max(0, hitNormal.norm().dot((float3()-ray.d).norm()));
+	color = float3(facing, facing, facing);
 
-	color = calculateLighting(wrld, hit, id);
+	//color = calculateLighting(wrld, hit, id);
 
 	/*unsigned int lC = wrld.lightsCount;
 	for (unsigned int i = 0; i < lC; ++i)
