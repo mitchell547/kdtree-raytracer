@@ -153,7 +153,7 @@ float3 calculateLighting(const  world & wrld, const Vec & hit, const int & id, c
 			float3 face_normal = smoothNormal(wrld.objects[id].v_n, bari);
 			//color = color + color*(1 / (distancei*distancei));
 			//color = color + 0.2*color*max(0, face_normal.dot(light_dir));
-			diffuse = (diffuse + color * max(0, face_normal.dot(light_dir))) *  wrld.objects[id].diffuse;
+			diffuse = diffuse + color * max(0, face_normal.dot(light_dir)) *  wrld.objects[id].diffuse;
 
 
 			
@@ -199,6 +199,7 @@ Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
 		Ray reflRay = reflect (ray, tr, hit, bari);
 		color = color*(1.0 - tr.reflect) + RayTrace (wrld, reflRay, deep-1)*tr.reflect;
 	}
+	//color += calculateLighting(wrld, hit, id, bari);
 	return color;
 }
 
@@ -226,7 +227,7 @@ void SimpleRender (const  world & wrld, const camera & cam, Vec c[], const imgSe
 					Vec d = cam.cameraXangle*(((sx + .5) / 2 + x) / img.w - .5) +
 						cam.cameraYangle*(((sy + .5) / 2 + y) / img.h - .5) +
 						cam.cameraLocation.d;
-
+					
 					r += RayTrace (wrld, Ray (cam.cameraLocation.o , d.normalization ()), REFLECTION_DEPTH);//
 
 					c[i] += Vec (clamp (r.x), clamp (r.y), clamp (r.z))*k;

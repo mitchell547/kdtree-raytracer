@@ -43,8 +43,8 @@
 
 // Cube model
 // Сцена с кубом
-Vec lights[] = { Vec (7, 70, 25),
-				Vec (60, 7, 7) };
+Vec lights[] = { Vec (10, 70, 35),
+				Vec (60, 17, 7) };
 triangle obj[] = {
 	triangle (Vec (37, 25, -4), Vec (39, 25, -4), Vec (39, 27, -4), Vec (.0, .0, .50), 0),//back
 
@@ -313,6 +313,7 @@ int main (int argc, char *argv[])
 	rabbit.Load ("bun_zipper_res4.ply");
 	//camera cam (Ray (Vec (85, 55, 170), Vec (-0.45, -0.04, -1).normalization ()), Vec (w*.5135 / h));
 	camera cam (Ray (Vec (0, 70, 220), Vec (0, -0.25, -1).normalization ()), Vec (w*.5135 / h,0,0));
+	//camera cam (Ray (Vec (0, 60, 200), Vec (0, -0.25, -1).normalization ()), Vec (w*.5135 / h,0,0));
 	int objCount = sizeof(obj) / sizeof(triangle);
 	int lightsCount = 2;
 	world wrld = world (objCount, lightsCount, obj, lights);

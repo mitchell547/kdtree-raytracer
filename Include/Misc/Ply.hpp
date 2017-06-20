@@ -174,7 +174,7 @@ int Model_PLY::Load (char* filename) {
 	for (int i = 0; i < TotalFaces; ++i)
 		faces[i] = new int[3];
 
-	for (int iterator = 0; iterator < this->TotalFaces; iterator++)
+	for (int iterator = 0; iterator < this->TotalFaces; /*iterator++*/)
 	{
 		fgets (buffer, 300, file);
 		if (buffer[0] == '3')
@@ -195,40 +195,50 @@ int Model_PLY::Load (char* filename) {
 					
 			triangle_index += 3;
 			TotalConnectedTriangles += 3;
+			iterator++;
 		}
 		i += 3;
 	}
 
-	//1) вычисляем нормали всех полигонов и заносим в нормали вершин
+	//1) РІС‹С‡РёСЃР»СЏРµРј РЅРѕСЂРјР°Р»Рё РІСЃРµС… РїРѕР»РёРіРѕРЅРѕРІ Рё Р·Р°РЅРѕСЃРёРј РІ РЅРѕСЂРјР°Р»Рё РІРµСЂС€РёРЅ
 	Vecf * normals = new Vecf[TotalConnectedPoints] ();
 	for (int p = 0; p < TotalConnectedPoints; p++)
 		normals[p] = Vecf (0, 0, 0);
 			
 	for (int f = 0; f < TotalFaces; f++)
 	{
+		int a = 0;
 		Vecf n;
 		n =  (points[faces[f][1]] - points[faces[f][0]]).cross( points[faces[f][2]] - points[faces[f][1]]);
 		n = n.normalization ();
 
-		for (int v = 0; v < 3; v++)
+		for (int v = 0; v < 3; v++) {
 			normals[faces[f][v]] = normals[faces[f][v]] + n;
+		}
 	}
 
-	//2) нормируем
+	//2) РЅРѕСЂРјРёСЂСѓРµРј
 	for (int f = 0; f < TotalConnectedPoints; f++)
 	{
+		if (normals[f].x == 0 && normals[f].y == 0 && normals[f].z == 0) {
+			printf("\nZero normal at vertex #%d!", f);
+			//assert(false);
+			continue;
+		}
 		normals[f] = normals[f].normalization ();
 	}
+
 	
 	faces_out = new face[TotalFaces] ();
-	//3) заносим в face_out
-	for (int f = 0; f<TotalFaces; f++)
+	//3) Р·Р°РЅРѕСЃРёРј РІ face_out
+	for (int f = 0; f<TotalFaces; f++) {
 		for (int v = 0; v < 3; v++)
 		{
 
 			//faces_out[f].points[v] = faces[f][v];
 			faces_out[f].normals[v] = normals[faces[f][v]];
 		}
+	}
 
 	fclose (file);
 
@@ -303,7 +313,7 @@ void  plyToMass (Model_PLY  & model, world & wrld)
 	b = triangle (Vec (-70, 5, -100), Vec (70, 5, -100), Vec (-70, 105, -100), Vec (0.1, 0.1, 0.1), 0.6).moveZ (10);
 	//b.diffuse = 0;
 	objects[objCount_ - 3] = b;
-	objects[objCount_ - 2] = triangle (Vec (-70, 5, -100), Vec (-70, 5, 100), Vec (70, 5, 100), Vec (0.01, 0.01, 0.02), 0).moveZ (10);//пол
+	objects[objCount_ - 2] = triangle (Vec (-70, 5, -100), Vec (-70, 5, 100), Vec (70, 5, 100), Vec (0.01, 0.01, 0.02), 0).moveZ (10);//РїРѕР»
 	objects[objCount_ - 1] = triangle (Vec (-70, 5, -100), Vec (70, 5, 100), Vec (70, 5, -100), Vec (0.01, 0.01, 0.02), 0).moveZ (10);
 
 

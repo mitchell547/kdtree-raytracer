@@ -176,7 +176,7 @@ struct triangle
 		uv.v[1] = r.d.dot(qvec) * invDet;
 		if (uv.v[1] < 0 || uv.v[0] + uv.v[1] > 1) return false;
 
-		//tuv.v[0] = p0p2.dot(qvec) * invDet; // distance from ray origin to intersection point
+		//float t = p0p2.dot(qvec) * invDet; // distance from ray origin to intersection point
 		if (p0p2.dot(qvec) * invDet < 0) return false;
 
 		//float3 dnorm = r.d;
