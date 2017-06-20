@@ -87,6 +87,11 @@ struct float3 {
 		return *this = *this * (1 / sqrt (v[X]*v[X] + v[Y]*v[Y] + v[Z]*v[Z]));
 	}
 
+	inline   float3		norm () const {
+		float n = 1 / sqrt (v[X]*v[X] + v[Y]*v[Y] + v[Z]*v[Z]);
+		return float3(v[X] * n, v[Y] * n, v[Z] * n);
+	}
+
 	inline   float	dot			  (const float3 &b) const {
 		return v[X] * b.v[X] + v[Y] * b.v[Y] + v[Z] * b.v[Z];
 	} 

@@ -54,9 +54,9 @@ inline   Ray reflect (const Ray & r,const  triangle & obj,const Vec & hit) {
 
 // Поиск пересечений луча с треугольниками сцены
 inline   bool findIntersection (const triangle objects[], const unsigned int objCount,
-	const Ray &r, double &t, int &id, float3 & hit)
+	const Ray &r, double &t, int &id, float3 & hit, float3 & baricentric)
 {
-	float3 localHit;
+	float3 localHit, bari;
 	double  d; 
 	t = INF;
 	for (unsigned int i = objCount; i--;)
@@ -64,7 +64,7 @@ inline   bool findIntersection (const triangle objects[], const unsigned int obj
 	#ifndef MOLLER_TRUMBORE_INTERSECT
 		bool isIntersection = objects[i].intersect (r, localHit); 
 	#else
-		bool isIntersection = objects[i].mollerTrumboreIntersect(r, localHit); 
+		bool isIntersection = objects[i].mollerTrumboreIntersect(r, localHit, bari); 
 	#endif
 			
 		if (isIntersection)
@@ -105,8 +105,9 @@ inline   bool Visible (const  world & wrld, const Vec & hit, const Vec & light, 
 	Ray r (hit + sub * 0.001, sub);
 	//Ray r (hit, sub);
 	double distance;
+	float3 bari;
 	int id1 = -1;
-	bool isIntersection = findIntersection (wrld.objects, wrld.objCount, r, distance, id1, hit1);
+	bool isIntersection = findIntersection (wrld.objects, wrld.objCount, r, distance, id1, hit1, bari);
 	if (!isIntersection)
 		return true;
 	else {
@@ -123,27 +124,9 @@ inline   bool Visible (const  world & wrld, const Vec & hit, const Vec & light, 
 	*/
 }
 
-/*
-Recursively trace the input ray with a light source and reflection
-*/
-Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
-	Vec color (0, 0, 0);
-	int id = 0;
-	float3 hit;// найдем полигон
-	double distance ;
-
-	//bool isIntersection = intersectHelper (wrld.objects, wrld.objCount, ray, distance, id, hit);
-	bool isIntersection = findIntersection (wrld.objects, wrld.objCount, ray, distance, id, hit);
-	
-	if (!isIntersection)
-		return color;
-	triangle tr = wrld.objects[id];
-
-	color = tr.c;
-
-	//if (!tr.PointInTriangle(hit, tr.p[0], tr.p[1], tr.p[2]))
-	//	assert(false);
-	
+float3 calculateLighting(const  world & wrld, const Vec & hit, const int & id) {
+	triangle tri = wrld.objects[id];
+	float3 color = tri.c;
 	unsigned int lC = wrld.lightsCount;
 	for (unsigned int i = 0; i < lC; ++i)
 	{//проверим освещенность
@@ -161,6 +144,59 @@ Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
 			color = color*0.2;
 		}
 	}
+	return color;
+}
+
+float facingRatio(const triangle & tr, const Ray & ray) {
+	return max(0, tr._normal.norm().dot((float3()-ray.d).norm()));
+}
+
+float3 smoothNormal(float3 v_n[3], float3 & bari) {
+	return (1 - bari.v[1] - bari.v[2]) * v_n[0] + bari.v[1] * v_n[1] + bari.v[2] * v_n[2];
+}
+
+/*
+Recursively trace the input ray with a light source and reflection
+*/
+Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
+	float3 color (0, 0, 0);
+	int id = 0;
+	float3 hit, bari;// найдем полигон
+	double distance ;
+
+	//bool isIntersection = intersectHelper (wrld.objects, wrld.objCount, ray, distance, id, hit);
+	bool isIntersection = findIntersection (wrld.objects, wrld.objCount, ray, distance, id, hit, bari);
+	
+	if (!isIntersection)
+		return color;
+	triangle tr = wrld.objects[id];
+	//if (!tr.PointInTriangle(hit, tr.p[0], tr.p[1], tr.p[2]))
+	//	assert(false);
+
+	float3 hitNormal = (1 - bari.v[1] - bari.v[2]) * tr.v_n[0] + bari.v[1] * tr.v_n[1] + bari.v[2] * tr.v_n[2]; // smoothed normal
+	//float3 hitNormal = smoothNormal(tr.v_n, bari);
+	//float facing = max(0, hitNormal.norm().dot((float3()-ray.d).norm()));
+	//color = float3(facing, facing, facing);
+
+	color = calculateLighting(wrld, hit, id);
+
+	/*unsigned int lC = wrld.lightsCount;
+	for (unsigned int i = 0; i < lC; ++i)
+	{//проверим освещенность
+		bool isVisible = Visible (wrld, hit, wrld.lights[i], id);
+		if (isVisible)
+		{
+			//float3 light = wrld.lights[i] - hit;
+			double distancei = wrld.lights[i].distance (hit);
+			//double cos = abs ((light.dot (tr.normal ().normalization ())) / (distancei));
+			
+			color = color + color*(1 / (distancei*distancei));
+		}
+		else
+		{
+			color = color*0.2;
+		}
+	}*/
 	
 
 	//	
@@ -168,7 +204,7 @@ Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
 	if (tr.reflect > 0 && deep > 0)//найдем отражение
 	{
 		Ray reflRay = reflect (ray, tr, hit);
-		color = color*(1.0 - tr.reflect) + RayTrace (wrld, reflRay, deep-1)*tr.reflect;
+		//color = color*(1.0 - tr.reflect) + RayTrace (wrld, reflRay, deep-1)*tr.reflect;
 	}
 	
 	return color;

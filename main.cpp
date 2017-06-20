@@ -22,7 +22,7 @@
 
 //#define sampling	// antialiasing
 #define MOLLER_TRUMBORE_INTERSECT
-#define REFLECTION_DEPTH 2
+#define REFLECTION_DEPTH 1
 #define TREE_DEPTH 1
 
 // Choose model
@@ -33,7 +33,7 @@
 
 // Using k-d tree tracing
 // (*) Включение трассировки k-d дерева
-#define kdtrace
+//#define kdtrace
 
 //#define TREE_VISUALISATION	// для отладки
 

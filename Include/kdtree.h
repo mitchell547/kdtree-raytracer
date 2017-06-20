@@ -214,13 +214,13 @@ triangle* traceKDTree(const KDNode &root, const Ray &ray, float3 &pHit, bool &ed
 		// Leaf node
 		// Листовой узел
 		while (node->left == nullptr && node->right == nullptr) {
-			float3 hit;		
+			float3 hit, bari;		
 			
 			for (int i = 0; i < node->tris_cnt; ++i) {
 			#ifndef MOLLER_TRUMBORE_INTERSECT
 				if (node->triangles[i].intersect(ray, hit)) {
 			#else
-				if (node->triangles[i].mollerTrumboreIntersect(ray, hit)) {
+				if (node->triangles[i].mollerTrumboreIntersect(ray, hit, bari)) {
 			#endif
 					float dist = hit.distance(ray.o);
 					if (dist < min_dist) {

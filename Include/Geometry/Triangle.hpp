@@ -11,31 +11,33 @@ struct triangle
 	float3 p[3];
 	float3 c;
 	float3 _normal;
+	float3 v_n[3];	// vertex normals
 
 	//sphere
 	//Vec o; 
 	float3 o;
-	double rad;	
+	float rad;	
 
-	double difra; 
-	double reflect;
+	//double difra; 
+	//double reflect;
+	float diffuse, reflect, refraction;
 
 	inline   triangle (float3 a1_, float3 a2_, float3 a3_, float3 c_, double reflect_) : c (c_), reflect (reflect_) {
 		p[0] = a1_;	p[1] = a2_;	p[2] = a3_;
-		difra = 1;
+		//difra = 1;
 		//_normal = (a2 - a1).cross(a3 - a1);
 		_normal = (p[1] - p[0]).cross(p[2] - p[0]);
 
-		makeMinimumBoundingSphere (p[0], p[1], p[2]);
+		//makeMinimumBoundingSphere (p[0], p[1], p[2]);
 	}
 
 	inline   triangle (Vec a1_, Vec a2_, Vec a3_, Vec c_, double reflect_) : c (c_), reflect (reflect_) {
 		p[0] = a1_;	p[1] = a2_;	p[2] = a3_;
-		difra = 1;
+		//difra = 1;
 		//_normal = (a2 - a1).cross(a3 - a1);
 		_normal = (p[1] - p[0]).cross(p[2] - p[0]);
 
-		makeMinimumBoundingSphere (p[0], p[1], p[2]);
+		//makeMinimumBoundingSphere (p[0], p[1], p[2]);
 	}
 
 	void  makeMinimumBoundingSphere (const float3 &p1, const float3 &p2, const float3 &p3) {
@@ -150,7 +152,8 @@ struct triangle
 
 	
 
-	inline bool mollerTrumboreIntersect(const Ray &r, float3 & hit) const {
+	inline bool mollerTrumboreIntersect(const Ray &r, float3 & hit, float3 & baricentric) const {
+		// 't' is unused, so mb do u = uv.v[0], v = uv.v[1]
 		float3 tuv;
 		float3 p0p1 = p[1] - p[0];
 		float3 p0p2 = p[2] - p[0];
@@ -170,12 +173,13 @@ struct triangle
 		tuv.v[2] = r.d.dot(qvec) * invDet;
 		if (tuv.v[2] < 0 || tuv.v[1] + tuv.v[2] > 1) return false;
 
+		//tuv.v[0] = p0p2.dot(qvec) * invDet; // distance from ray origin to intersection point
+		if (p0p2.dot(qvec) * invDet < 0) return false;
+
 		//float3 dnorm = r.d;
 		//hit = r.o + dnorm.normalization() * p0p2.dot(qvec) * invDet;
 		hit = p[0] + tuv.v[1] * p0p1 + tuv.v[2] * p0p2;
-
-		//tuv.v[0] = p0p2.dot(qvec) * invDet; // distance from ray origin to intersection point
-		if (p0p2.dot(qvec) * invDet < 0) return false;
+		baricentric = tuv;
 		return true;
 	}
 

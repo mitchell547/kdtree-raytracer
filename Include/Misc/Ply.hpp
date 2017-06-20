@@ -273,6 +273,12 @@ void  plyToMass (Model_PLY  & model, world & wrld)
 
 		float inten =  model.Faces_intensity[i];
 		triangle a = triangle (a1 * 200, a2 * 200, a3 * 200, Vec (inten, inten, inten), 0.6);
+
+		for (int j = 0; j < 3; ++j) {
+			a.v_n[j].v[X] = model.faces_out[i].normals[j].x;
+			a.v_n[j].v[Y] = model.faces_out[i].normals[j].y;
+			a.v_n[j].v[Z] = model.faces_out[i].normals[j].z;
+		}
 		/*triangle a = triangle (model.Faces_Triangles[tr] * 200, 
 			model.Faces_Triangles[tr + 1] * 200, 
 			model.Faces_Triangles[tr + 2] * 200, Vec (inten, inten, inten), 0);
