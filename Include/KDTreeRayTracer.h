@@ -65,7 +65,7 @@ inline   bool Visible (const KDNode & root, const  world & wrld, const float3 & 
 Vec RayTrace (const  KDNode &root, const  world  & wrld, const Ray & ray,unsigned int deep) {
 	Vec color (0, 0, 0);
 	int id = 0;
-	float3 hit;// найдем полигон
+	float3 hit, bari;// найдем полигон
 	//double distanse ;
 	bool edgeHit;
 	
@@ -109,7 +109,7 @@ Vec RayTrace (const  KDNode &root, const  world  & wrld, const Ray & ray,unsigne
 
 	if (tr->reflect > 0 && deep > 0)//найдем отражение
 	{
-		Ray reflRay = reflect (ray, *tr, hit);
+		Ray reflRay = reflect (ray, *tr, hit, bari);
 		color = color*(1.0 - tr->reflect) + RayTrace(root, wrld, reflRay, deep-1)*tr->reflect;
 	}
 	return color;

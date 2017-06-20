@@ -26,8 +26,10 @@ struct triangle
 		p[0] = a1_;	p[1] = a2_;	p[2] = a3_;
 		//difra = 1;
 		//_normal = (a2 - a1).cross(a3 - a1);
-		_normal = (p[1] - p[0]).cross(p[2] - p[0]);
-
+		_normal = ((p[1] - p[0]).cross(p[2] - p[0])).norm();
+		diffuse = 0.5;
+		for (int v = 0; v < 3; ++v)
+			v_n[v] = _normal;
 		//makeMinimumBoundingSphere (p[0], p[1], p[2]);
 	}
 
@@ -35,8 +37,10 @@ struct triangle
 		p[0] = a1_;	p[1] = a2_;	p[2] = a3_;
 		//difra = 1;
 		//_normal = (a2 - a1).cross(a3 - a1);
-		_normal = (p[1] - p[0]).cross(p[2] - p[0]);
-
+		_normal = ((p[1] - p[0]).cross(p[2] - p[0])).norm();
+		diffuse = 0.5;
+		for (int v = 0; v < 3; ++v)
+			v_n[v] = _normal;
 		//makeMinimumBoundingSphere (p[0], p[1], p[2]);
 	}
 

@@ -261,6 +261,7 @@ FILE * Model_PLY::openFile(char* filename)
 
 void  plyToMass (Model_PLY  & model, world & wrld)
 {
+	const float REFLECTION = 0.7;
 	triangle * objects;
 	unsigned int objCount_ = model.TotalFaces + 10;
 	
@@ -272,7 +273,7 @@ void  plyToMass (Model_PLY  & model, world & wrld)
 		Vec a3 = Vec (model.Faces_Triangles[tr+2].x, model.Faces_Triangles[tr+2].y, model.Faces_Triangles[tr+2].z);
 
 		float inten =  model.Faces_intensity[i];	// ???
-		triangle a = triangle (a1 * 200, a2 * 200, a3 * 200, Vec (0.5, 0.5, 0.5), 0.6);
+		triangle a = triangle (a1 * 200, a2 * 200, a3 * 200, Vec (0.5, 0.5, 0.5), REFLECTION);
 
 		for (int j = 0; j < 3; ++j) {
 			a.v_n[j].v[X] = model.faces_out[i].normals[j].x;
