@@ -22,8 +22,8 @@
 
 //#define sampling	// antialiasing
 #define MOLLER_TRUMBORE_INTERSECT
-#define REFLECTION_DEPTH 2
-#define TREE_DEPTH 1
+#define REFLECTION_DEPTH 1
+#define TREE_DEPTH 0
 
 // Choose model
 // (*) Выбор модели (одна из)
@@ -33,7 +33,7 @@
 
 // Using k-d tree tracing
 // (*) Включение трассировки k-d дерева
-//#define kdtrace
+#define kdtrace
 
 //#define TREE_VISUALISATION	// для отладки
 
@@ -356,7 +356,7 @@ int main (int argc, char *argv[])
 	#ifndef kdtrace
 		SimpleRender(wrld, cam, c, img);	// Basic
 	#else
-		SimpleRender(scene, wrld, cam, c, img);	// K-d tree
+		SimpleRender(*scene, cam, c, img);	// K-d tree
 	#endif
 	double end = omp_get_wtime ();
 

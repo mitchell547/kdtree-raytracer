@@ -107,7 +107,7 @@ Vec RayTrace (const KDScene & scene, const Ray & ray,unsigned int deep) {
 		}
 	*/
 
-	color += calculateLighting(scene, ray, hit, id, bari);
+	//color += calculateLighting(scene, ray, hit, id, bari);
 	/*unsigned int lC = wrld.lightsCount;
 	for (unsigned int i = 0; i < lC; ++i)
 	{//проверим освещенность
@@ -130,12 +130,12 @@ Vec RayTrace (const KDScene & scene, const Ray & ray,unsigned int deep) {
 	if (tri.reflect > 0 && deep > 0)//найдем отражение
 	{
 		Ray reflRay = reflect (ray, tri, hit, bari);
-		color = color*(1.0 - tri.reflect) + RayTrace(scene, reflRay, deep-1)*tri.reflect;
+		//color = color*(1.0 - tri.reflect) + RayTrace(scene, reflRay, deep-1)*tri.reflect;
 	}
 	return color;
 }
 
-void SimpleRender (const KDScene & scene, const  world & wrld, const camera & cam, Vec c[], const imgSettings & img) {
+void SimpleRender (const KDScene & scene, const camera & cam, Vec c[], const imgSettings & img) {
 	Vec r; 
 	int i = 0;
 	#pragma omp parallel for schedule(dynamic, 2) private(r, i)       

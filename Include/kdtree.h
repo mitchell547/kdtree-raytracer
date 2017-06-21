@@ -120,8 +120,9 @@ KDScene* buildKDScene(triangle * triangles, int tris_cnt, Vec * lights, int ligh
 	if (tris_cnt >= 0) {
 		scene->triangles = new triangle[tris_cnt];
 		copy_triangles(scene->triangles, triangles, tris_cnt);
+		scene->bbox = getSceneAABB(triangles, tris_cnt);
 	}
-		
+	
 	if (depth == 0 || tris_cnt == 0) {
 		// root is leaf node
 		scene->nodes[0].left = tris_cnt;
@@ -131,7 +132,7 @@ KDScene* buildKDScene(triangle * triangles, int tris_cnt, Vec * lights, int ligh
 
 	// Строим дерево
 
-	scene->bbox = getSceneAABB(triangles, tris_cnt);
+	
 
 	buildKDNode(scene->nodes, 0, triangles, 0, tris_cnt, depth);
 
@@ -289,15 +290,16 @@ int traceKDScene(const KDScene & scene, const Ray & ray, float3 & hit, float3 & 
 				bari = local_bari;
 				res_id = tri_id;
 			}
-		} else {
-			// Если не нашли пересечение, то поднимаемся в другой узел
-			if (s.empty()) return res_id;
-			TraceInfo ti = s.top();
-			s.pop();
-			node = &scene.nodes[ti.node];
-			tmin = tmax;
-			tmax = ti.tmax;
-		}
+		} 
+
+		// Выходим, если закончили все проверки, или поднимаемся по стеку
+		if (s.empty()) return res_id;
+		TraceInfo ti = s.top();
+		s.pop();
+		node = &scene.nodes[ti.node];
+		tmin = tmax;
+		tmax = ti.tmax;
+		
 	}
 	return res_id;
 }
