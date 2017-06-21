@@ -20,7 +20,13 @@ struct AABB {
 	//AABB() : min(float3(0, 0, 0)), max(float3(0, 0, 0)) {}
 	//AABB(float3 _min, float3 _max) : min(_min), max(_max) { }
 	AABB() {min = float3(0, 0, 0); max = float3(0, 0, 0);};
-	AABB(float3 _min, float3 _max) { min = _min; max = _max; };
+	AABB(float3 _min, float3 _max) { 
+		this->min = _min; this->max = _max; 
+		for (int i = 0; i < 3; ++i) {
+			this->min.v[i] = min(_min.v[i], _max.v[i]); 
+			this->max.v[i] = max(_min.v[i], _max.v[i]);
+		}
+	};
 };
 
 float3 getSizes(const AABB & box) {

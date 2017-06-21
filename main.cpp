@@ -39,7 +39,7 @@
 
 #include "Include/kdtree.h"
 #include "Include/BasicRayTracer.h"
-#include "Include/KDTreeRayTracer.h"
+//#include "Include/KDTreeRayTracer.h"
 
 // Cube model
 // Сцена с кубом
@@ -321,7 +321,7 @@ int main (int argc, char *argv[])
 
 	KDNode scene;
 	double build_s = omp_get_wtime();
-	buildKDTree(scene, wrld.objects, wrld.objCount, TREE_DEPTH);
+	//buildKDTree(scene, wrld.objects, wrld.objCount, TREE_DEPTH);
 	double build_f = omp_get_wtime();
 	fprintf (stderr, "\rBuild time %5.3f\n", build_f-build_s);
 #endif
