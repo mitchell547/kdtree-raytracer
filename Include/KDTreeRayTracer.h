@@ -34,7 +34,7 @@ inline   bool Visible (const KDScene & scene, const float3 & hit, const float3 &
 	double distance;
 	int id1 = -1;
 	int edgeHit;
-	int id = traceKDScene(scene, 0, r, hit1, bari, edgeHit);
+	int id = traceKDScene(scene, r, hit1, bari, edgeHit);
 	triangle *tr = &scene.triangles[id];
 	if (id < 0)
 		return true;
@@ -83,14 +83,14 @@ Vec RayTrace (const KDScene & scene, const Ray & ray,unsigned int deep) {
 	float3 hit, bari;// найдем полигон
 	int edgeHit=0;
 	
-	int tri_id = traceKDScene(scene, 0, ray, hit, bari, edgeHit);
+	int tri_id = traceKDScene(scene, ray, hit, bari, edgeHit);
 
 	#ifdef TREE_VISUALISATION
 	if (edgeHit)
 		//return Vec(0.8, 0.8, 0.8);
 		color = color + Vec(0.05, 0.05, 0.05) * edgeHit;
 	#endif
-
+	//color = Vec(1,1,1);
 	if (tri_id < 0)
 		return color;
 	
@@ -133,7 +133,7 @@ void SimpleRender (const KDScene & scene, const camera & cam, Vec c[], const img
 					Vec d = cam.cameraXangle*(((sx + .5) / 2 + x) / img.w - .5) +
 						cam.cameraYangle*(((sy + .5) / 2 + y) / img.h - .5) +
 						cam.cameraLocation.d;
-
+					//if (x == 100 && y == 240-200)
 					r += RayTrace(scene, Ray (cam.cameraLocation.o , d.normalization ()), REFLECTION_DEPTH);
 
 					c[i] += Vec (clamp (r.x), clamp (r.y), clamp (r.z))*k;

@@ -35,7 +35,7 @@
 // (*) Включение трассировки k-d дерева
 #define kdtrace
 
-#define TREE_VISUALISATION	// для отладки
+//#define TREE_VISUALISATION	// для отладки
 
 #include "Include/kdtree.h"
 #include "Include/BasicRayTracer.h"

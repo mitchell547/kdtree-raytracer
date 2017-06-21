@@ -280,6 +280,9 @@ void  plyToMass (Model_PLY  & model, world & wrld)
 		tr += 3;
 	}
 
+	//objects[objCount_ - 14] = triangle (Vec (-70, 5, -100), Vec (-70, 5, 0), Vec (70, 5, 0), Vec (0.0, 0.1, 0.3), 0).moveZ (10).moveY(2);//пол
+	//objects[objCount_ - 13] = triangle (Vec (-70, 5, -100), Vec (70, 5, 0), Vec (70, 5, -100), Vec (0.0, 0.05, 0.25), 0).moveZ (10).moveY(2);
+
 	objects[objCount_ - 12] = triangle (Vec (-70, 75, -100), Vec (-70, 75, 100), Vec (70, 75, 100), Vec (0.5, 0.5, 0.1), 0).moveZ (10);//потолок
 	objects[objCount_ - 11] = triangle (Vec (-70, 75, -100), Vec (70, 75, 100), Vec (70, 75, -100), Vec (0.5, 0.5, 0.1), 0).moveZ (10);
 

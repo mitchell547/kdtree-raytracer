@@ -9,7 +9,7 @@
 const int BINS_CNT = 32;
 
 struct KDNode {
-	AABB box;
+	//AABB box;	// для теста
 	AXIS split_axis;	// ось, по которой разбивается узел 
 	float split_coord;	// координата плоскости разбиения
 	int left;	// Если left < right, то является внутернним узлом
@@ -154,7 +154,7 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 		if (fabs(mid_points[i].v[0]) < EPSILON)
 			int e = 3;
 	}
-	node->box = bbox;	// для теста
+	//node->box = bbox;	// для теста
 	// Ищем оптимальное разбиение, используя разбиение на интервалы и SAH
 
 	// Берём наибольшую длину бокса в качестве проверяемой оси
@@ -273,14 +273,19 @@ int traceKDScene(const KDScene & scene, const Ray & ray, float3 & hit, float3 & 
 		while (node->left < node->right) {
 			tsplit = raySplitIntersect(ray, node->split_axis, node->split_coord);
 			int left_is_far = (node->split_coord > ray.o.v[node->split_axis]) ? 0 : 1;
+			//int left_is_far = (node->split_coord < (ray.o + ray.d.norm() * tmin).v[node->split_axis]) ? 0 : 1;
+			//int left_is_far = (ray.d.v[node->split_axis] < 0) ? 1 : 0;
 			int l_id = node->left + left_is_far, 
 				r_id = node->left + (1-left_is_far);
-			if (tsplit >= tmax || tsplit < 0) {
+			// Проблема с длинными треугольниками:
+			// если они вылазят за границы своего узла, то пересечения не будет найдено
+			/*if (tsplit >= tmax || tsplit < 0) {
 				node = &scene.nodes[l_id];
 			} else if (tsplit <= tmin) {
 				node = &scene.nodes[r_id];
 			} else {
-
+			*/
+			{
 				#ifdef TREE_VISUALISATION
 				// Визуализация плоскостей разбиения
 				if (RayEdgeIntersect(ray, node->split_axis, node->split_coord, tsplit)) 
@@ -332,9 +337,10 @@ int traceKDScene(const KDScene & scene, int trace_node, const Ray & ray, float3 
 	if (isLeafNode(*node))
 		return hasIntersection(scene.triangles, node->right, node->left, ray, dist, hit, bari);
 
-	if (!RayAABBIntersect(ray, node->box, tmin, tmax))
+	// (!)
+	/*if (!RayAABBIntersect(ray, node->box, tmin, tmax))
 		return -1;
-
+		*/
 	int res_id = -1;
 	
 	
@@ -342,7 +348,7 @@ int traceKDScene(const KDScene & scene, int trace_node, const Ray & ray, float3 
 	int id;
 	res_id = traceKDScene(scene, node->left, ray, hit, bari, edgeHit);
 	id = traceKDScene(scene, node->right, ray, localhit, localbari, edgeHit);
-	if (ray.o.distance(localhit) < ray.o.distance(hit)) {
+	if (id >= 0 && ray.o.distance(localhit) < ray.o.distance(hit) || res_id < 0) {
 		res_id = id;
 		hit = localhit;
 		bari = localbari;
