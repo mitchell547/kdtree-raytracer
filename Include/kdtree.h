@@ -98,9 +98,9 @@ public:
 
     bool operator()(triangle & a, triangle & b) {
 		AABB box = getTriangleAABB(a);
-		float mid_a = (box.max.v[axis] - box.min.v[axis]) / 2;
+		float mid_a = (box.max.v[axis] + box.min.v[axis]) / 2;
 		box = getTriangleAABB(b);
-		float mid_b = (box.max.v[axis] - box.min.v[axis]) / 2;
+		float mid_b = (box.max.v[axis] + box.min.v[axis]) / 2;
 		return mid_a < mid_b;
     }
 };
@@ -132,9 +132,7 @@ KDScene* buildKDScene(triangle * triangles, int tris_cnt, Vec * lights, int ligh
 
 	// Строим дерево
 
-	
-
-	buildKDNode(scene->nodes, 0, triangles, 0, tris_cnt, depth);
+	buildKDNode(scene->nodes, 0, scene->triangles, 0, tris_cnt, depth);
 
 	return scene;
 }
@@ -147,6 +145,8 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 
 	int tris_cnt = right_tri - left_tri;
 
+	printf("\n%d (%d) : %d / %d", depth, node_id, node->left, node->right);
+
 	if (depth <= 0) {
 		return;
 	}
@@ -157,7 +157,7 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 		return;
 	}
 
-	AABB bbox = getSceneAABB(triangles, tris_cnt);	// (!) Локальный бокс может быть меньше глобального по всем осям
+	AABB bbox = getSceneAABB(triangles + left_tri, tris_cnt);	// (!) Локальный бокс может быть меньше глобального по всем осям
 	float3 * mid_points = new float3[tris_cnt];	// "центры" треугольников
 	for (int i = 0; i < tris_cnt; ++i) { 
 		AABB box = getTriangleAABB(triangles[i+left_tri]);
@@ -177,7 +177,9 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 	int * bins_sizes = new int[BINS_CNT];	// массив количеств треугольников в интервалах
 	for (int i = 0; i < BINS_CNT; ++i) bins_sizes[i] = 0;
 	float coord = bbox.min.v[split_axis];
-	countBins(bins_sizes, BINS_CNT, mid_points + left_tri, tris_cnt, bbox, split_axis);	// ??
+	countBins(bins_sizes, BINS_CNT, mid_points, tris_cnt, bbox, split_axis);	// ??
+
+	delete[] mid_points;
 
 	// Считаем SAH для интервалов и выбираем лучшую плоскость
 	float min_SAH = tris_cnt * getSurfaceArea(bbox);
@@ -210,12 +212,26 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 
 	node->split_axis = split_axis;
 	node->split_coord = bbox.min.v[split_axis] + step * (split_plane + 1);
+	//for (int i = left_tri; i < right_tri; ++i)
+	//	printf("%5.3f %5.3f %5.3f\n", triangles[i].p[0].v[0], triangles[i].p[0].v[1], triangles[i].p[0].v[2]);
+	//printf("\n");
 	std::sort(triangles + left_tri, triangles + right_tri, tri_comp(split_axis));
+	
+	//for (int i = left_tri; i < right_tri; ++i)
+	//	printf("%5.3f %5.3f %5.3f\n", triangles[i].p[0].v[0], triangles[i].p[0].v[1], triangles[i].p[0].v[2]);
+	/*int cnt = 0;
+	for (int i = 0; i < tris_cnt; ++i) {
+		if (mid_points[i].v[split_axis] <= node->split_coord)
+			cnt++;
+	}
+	printf("\n%d - %d", min_left_cnt, cnt);
+	*/
+	//printf(" [%d, %5.3f]", split_axis, node->split_coord);
+
+	//delete[] mid_points;//bug here
 
 	// // Формируем левые и правые узлы
-
-	delete[] mid_points;
-
+	
 	// Recursively create nodes
 	// Рекурсивно формируем узлы дерева
 	int right_id = (node_id + 1) * 2, 
@@ -223,11 +239,11 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 	node->left = left_id; node->right = right_id;
 	buildKDNode(nodes, left_id, triangles, left_tri, left_tri + min_left_cnt, depth-1);
 	buildKDNode(nodes, right_id, triangles, left_tri + min_left_cnt, right_tri, depth-1);
-
+	
 	return;
 }
 
-int hasIntersection(triangle * tris, int left_id, int right_id, const Ray & ray, float3 & hit, float3 & bari) {
+int hasIntersection(triangle * tris, int left_id, int right_id, const Ray & ray, float & distance, float3 & hit, float3 & bari) {
 	float min_dist = INF;
 	int id = -1;
 	for (int i = left_id; i < right_id; ++i) {
@@ -245,6 +261,7 @@ int hasIntersection(triangle * tris, int left_id, int right_id, const Ray & ray,
 			}
 		}
 	}
+	distance = min_dist;
 	return id;
 }
 
@@ -276,10 +293,13 @@ int traceKDScene(const KDScene & scene, const Ray & ray, float3 & hit, float3 & 
 		// Спускаемся до листового узла
 		while (node->left < node->right) {
 			tsplit = raySplitIntersect(ray, node->split_axis, node->split_coord);
+			int left_is_far = (node->split_coord > ray.o.v[node->split_axis]) ? 0 : 1;
+			int l_id = node->left + left_is_far, 
+				r_id = node->left + (1-left_is_far);
 			if (tsplit <= tmin) {
-				node = &scene.nodes[node->right];
+				node = &scene.nodes[r_id];
 			} else if (tsplit >= tmax) {
-				node = &scene.nodes[node->left];
+				node = &scene.nodes[l_id];
 			} else {
 
 				#ifdef TREE_VISUALISATION
@@ -288,22 +308,24 @@ int traceKDScene(const KDScene & scene, const Ray & ray, float3 & hit, float3 & 
 						edgeHit++;	
 				#endif
 
-				s.push(TraceInfo(node->right, tmax));
+				s.push(TraceInfo(r_id, tmax));
 				tmax = tsplit;
-				node = &scene.nodes[node->left];
+				node = &scene.nodes[l_id];
 			}
 		}
 
 		// В листовом узле ищем пересечение
 		float3 local_hit, local_bari;
-		int tri_id = hasIntersection(scene.triangles, node->right, node->left, ray, local_hit, local_bari);
+		float dist;
+		int tri_id = hasIntersection(scene.triangles, node->right, node->left, ray, dist, local_hit, local_bari);
 		if (tri_id >= 0) {
-			float dist = ray.o.distance(local_hit);
+			//dist = ray.o.distance(local_hit);
 			if (dist < min_dist) {
 				min_dist = dist;
 				hit = local_hit;
 				bari = local_bari;
 				res_id = tri_id;
+				return res_id;
 			}
 		} 
 

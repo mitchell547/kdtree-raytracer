@@ -178,7 +178,6 @@ void SimpleRender (const  world & wrld, const camera & cam, Vec c[], const imgSe
 		fprintf (stderr, "\rRemain (%d spp) %d lines ", 1, y);
 		for (int x = img.w - 1, i = y * img.w + x; x >= 0; --x, --i) {  // Loop cols 
 			//i = y * img.w + x;	// use this with OpenMP
-			
 			#ifndef sampling
 				double sx = 0.5, sy = 0.5;
 				double k = 1;				

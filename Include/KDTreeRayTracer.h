@@ -94,7 +94,7 @@ Vec RayTrace (const KDScene & scene, const Ray & ray,unsigned int deep) {
 		//return Vec(0.8, 0.8, 0.8);
 		color = color + Vec(0.05, 0.05, 0.05) * edgeHit;
 	#endif
-
+	//color = Vec(1,1,1);
 	if (tri_id < 0)
 		return color;
 	
@@ -133,6 +133,7 @@ Vec RayTrace (const KDScene & scene, const Ray & ray,unsigned int deep) {
 		Ray reflRay = reflect (ray, tri, hit, bari);
 		//color = color*(1.0 - tri.reflect) + RayTrace(scene, reflRay, deep-1)*tri.reflect;
 	}
+	
 	return color;
 }
 
@@ -148,6 +149,7 @@ void SimpleRender (const KDScene & scene, const camera & cam, Vec c[], const img
 				double sx = 0.5, sy = 0.5;
 				double k = 1;				
 			#else
+				// Семплирование для антиалиасинга
 				double k = .25;
 				for (unsigned int sy = 0; sy < 2; ++sy)     // 2x2 subpixel rows 
 					for (unsigned int sx = 0; sx < 2; ++sx) // 2x2 subpixel cols	
@@ -158,7 +160,7 @@ void SimpleRender (const KDScene & scene, const camera & cam, Vec c[], const img
 					Vec d = cam.cameraXangle*(((sx + .5) / 2 + x) / img.w - .5) +
 						cam.cameraYangle*(((sy + .5) / 2 + y) / img.h - .5) +
 						cam.cameraLocation.d;
-
+					//if (y == 240-140 && x == 120)
 					r += RayTrace(scene, Ray (cam.cameraLocation.o , d.normalization ()), REFLECTION_DEPTH);
 
 					c[i] += Vec (clamp (r.x), clamp (r.y), clamp (r.z))*k;
