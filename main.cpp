@@ -23,7 +23,7 @@
 //#define sampling	// antialiasing
 #define MOLLER_TRUMBORE_INTERSECT
 #define REFLECTION_DEPTH 1
-#define TREE_DEPTH 2
+#define TREE_DEPTH 1
 
 // Choose model
 // (*) Выбор модели (одна из)
@@ -35,7 +35,7 @@
 // (*) Включение трассировки k-d дерева
 #define kdtrace
 
-//#define TREE_VISUALISATION	// для отладки
+#define TREE_VISUALISATION	// для отладки
 
 #include "Include/kdtree.h"
 #include "Include/BasicRayTracer.h"
@@ -298,7 +298,7 @@ int main (int argc, char *argv[])
 	//int w = 640, h = 480;
 	int w = 320, h = 240;
 	int samps = argc == 2 ? atoi (argv[1]) / 4 : 1; // # samples 
-	
+
 	// Output image
 	// Выходное изображение
 	Vec  r, *c = new Vec[w*h];

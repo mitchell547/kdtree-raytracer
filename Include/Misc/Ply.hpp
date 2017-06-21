@@ -303,5 +303,6 @@ void  plyToMass (Model_PLY  & model, world & wrld)
 
 
 	wrld.setObj (objects, objCount_);	
+	//wrld.setObj (objects + model.TotalFaces, 12);	
 	delete[] objects;
 }
