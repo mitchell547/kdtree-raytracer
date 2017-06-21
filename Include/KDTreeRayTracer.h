@@ -34,7 +34,7 @@ inline   bool Visible (const KDScene & scene, const float3 & hit, const float3 &
 	double distance;
 	int id1 = -1;
 	int edgeHit;
-	int id = traceKDScene(scene, r, hit1, bari, edgeHit);
+	int id = traceKDScene(scene, 0, r, hit1, bari, edgeHit);
 	triangle *tr = &scene.triangles[id];
 	if (id < 0)
 		return true;
@@ -83,7 +83,7 @@ Vec RayTrace (const KDScene & scene, const Ray & ray,unsigned int deep) {
 	float3 hit, bari;// найдем полигон
 	int edgeHit=0;
 	
-	int tri_id = traceKDScene(scene, ray, hit, bari, edgeHit);
+	int tri_id = traceKDScene(scene, 0, ray, hit, bari, edgeHit);
 
 	#ifdef TREE_VISUALISATION
 	if (edgeHit)

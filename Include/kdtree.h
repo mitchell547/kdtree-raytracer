@@ -325,16 +325,18 @@ int traceKDScene(const KDScene & scene, const Ray & ray, float3 & hit, float3 & 
 int traceKDScene(const KDScene & scene, int trace_node, const Ray & ray, float3 & hit, float3 & bari, int & edgeHit) {
 	edgeHit = 0;
 	float tmin, tmax;
-	
-	if (!RayAABBIntersect(ray, scene.bbox, tmin, tmax))
+
+	KDNode * node = &scene.nodes[trace_node];
+
+	float dist;
+	if (isLeafNode(*node))
+		return hasIntersection(scene.triangles, node->right, node->left, ray, dist, hit, bari);
+
+	if (!RayAABBIntersect(ray, node->box, tmin, tmax))
 		return -1;
 
 	int res_id = -1;
 	
-	KDNode * node = &scene.nodes[trace_node];
-	float dist;
-	if (isLeafNode(*node))
-		return hasIntersection(scene.triangles, node->left, node->right, ray, dist, hit, bari);
 	
 	float3 localhit, localbari;
 	int id;
