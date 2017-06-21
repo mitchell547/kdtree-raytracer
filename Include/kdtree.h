@@ -122,6 +122,10 @@ KDScene* buildKDScene(triangle * triangles, int tris_cnt, Vec * lights, int ligh
 		// root is leaf node
 		scene->nodes[0].left = tris_cnt;
 		scene->nodes[0].right = 0;
+
+		scene->nodes[0].tri_ids = new int[tris_cnt];
+		for (int i = 0; i < tris_cnt; ++i) scene->nodes[0].tri_ids[i] = i;
+		scene->nodes[0].id_cnt = tris_cnt;
 		return scene;
 	}
 
@@ -250,7 +254,7 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, i
 	float3 * mid_points = new float3[id_cnt];	// "центры" треугольников
 	for (int i = 0; i < id_cnt; ++i) { 
 		AABB box = getTriangleAABB(triangles[ids[i]]);
-		addAABB(bbox, getTriangleAABB(triangles[ids[i]]));
+		addAABB(bbox, box);
 		mid_points[i] = (box.max + box.min) / 2.0;
 	}
 	//node->box = bbox;	// для теста
@@ -312,11 +316,11 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, i
 	int lcnt = 0, rcnt = 0;
 	for (int i = 0; i < id_cnt; ++i) {
 		AABB box = getTriangleAABB(triangles[ids[i]]);
-		if (box.max.v[split_axis] <= node->split_coord) {
+		if (box.min.v[split_axis] <= node->split_coord) {
 			l_ids[lcnt] = i;
 			lcnt++;
 		}
-		if (box.min.v[split_axis] >= node->split_coord) {
+		if (box.max.v[split_axis] >= node->split_coord) {
 			r_ids[rcnt] = i;
 			rcnt++;
 		}
