@@ -37,11 +37,13 @@ struct KDScene {
 
 KDScene* buildKDScene(triangle * triangles, int tris_cnt, float3 lights, int light_cnt, int depth);
 
+int traceKDScene(const KDScene & scene, const Ray & ray, float3 & hit, float3 & bari, bool & edgeHit);
+
 void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri, int right_tri, int depth);
 
 //KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth);
 
-triangle* traceKDTree(KDNode &root);
+triangle* traceKDTree(const KDNode &root, const Ray &ray, float3 &pHit, bool &edgeHit);
 
 
 
@@ -211,23 +213,6 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 
 	// // Формируем левые и правые узлы
 
-	// Проблема: если границы треугольника выходят за пределы его интервала, то он обрезается
-	/*triangle * l = new triangle[min_left_cnt];
-	triangle * r = new triangle[tris_cnt - min_left_cnt];
-	int lcnt = 0, rcnt = 0;
-	for (int i = left_tri; i <= right_tri; ++i) {
-		if (mid_points[i].v[split_axis] <= node->split_coord) {
-			assert(lcnt < min_left_cnt);
-			l[lcnt] = triangles[i];
-			++lcnt;
-		} else {
-			assert(rcnt < tris_cnt - min_left_cnt);
-			r[rcnt] = triangles[i];
-			++rcnt;
-		}
-	}
-	assert(lcnt == min_left_cnt);
-	*/
 	delete[] mid_points;
 
 	// Recursively create nodes
@@ -241,7 +226,64 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 	return;
 }
 
+int hasIntersection(triangle * tris, int left_id, int right_id, float3 & hit, float3 & bari) {
+	return -1;
+}
 
+int traceKDScene(const KDScene & scene, const Ray & ray, float3 & hit, float3 & bari, bool & edgeHit) {
+	float tmin, tmax;
+	if (!RayAABBIntersect(ray, scene.bbox, tmin, tmax))
+		return -1;
+	
+	struct TraceInfo {
+		int node;
+		float tmax;
+		TraceInfo(int id, float t) : node(id), tmax(t) {};
+	};
+
+	// Трассируем, начиная с корневого узла
+	KDNode * node = &scene.nodes[0];
+	std::stack<TraceInfo> s;
+	float min_dist = INF;
+	int res_id = -1;
+	while (true) {
+		// Спускаемся до листового узла
+		while (node->left < node->right) {
+			float tsplit = raySplitIntersect(ray, node->split_axis, node->split_coord);
+			if (tsplit <= tmin) {
+				node = &scene.nodes[node->right];
+			} else if (tsplit >= tmax) {
+				node = &scene.nodes[node->left];
+			} else {
+				s.push(TraceInfo(node->right, tmax));
+				tmax = tsplit;
+				node = &scene.nodes[node->left];
+			}
+		}
+
+		// В листовом узле ищем пересечение
+		float3 local_hit, local_bari;
+		int tri_id = hasIntersection(scene.triangles, node->right, node->left, local_hit, local_bari);
+		if (tri_id >= 0) {
+			float dist = ray.o.distance(local_hit);
+			if (dist < min_dist) {
+				min_dist = dist;
+				hit = local_hit;
+				bari = local_bari;
+				res_id = tri_id;
+			}
+		} else {
+			// Если не нашли пересечение, то поднимаемся в другой узел
+			if (s.empty()) return res_id;
+			TraceInfo ti = s.top();
+			s.pop();
+			node = &scene.nodes[ti.node];
+			tmin = tmax;
+			tmax = ti.tmax;
+		}
+	}
+	return res_id;
+}
 
 /*KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth) {
 	//KDNode root;
