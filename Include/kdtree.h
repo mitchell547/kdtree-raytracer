@@ -8,16 +8,6 @@
 
 const int BINS_CNT = 32;
 
-/*struct KDNode {
-	AABB box;	// ограничивающий параллелепипед узла (bounding box)
-	AXIS split_axis;	// ось, по которой разбивается узел 
-	float split_coord;	// координата плоскости разбиения
-	triangle * triangles;	// массив входящих в листовой узел треугольников
-	int tris_cnt;	
-	KDNode * left;
-	KDNode * right;
-};*/
-
 struct KDNode {
 	AXIS split_axis;	// ось, по которой разбивается узел 
 	float split_coord;	// координата плоскости разбиения
@@ -41,11 +31,6 @@ int traceKDScene(const KDScene & scene, const Ray & ray, float3 & hit, float3 & 
 
 void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri, int right_tri, int depth);
 
-//KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth);
-
-triangle* traceKDTree(const KDNode &root, const Ray &ray, float3 &pHit, bool &edgeHit);
-
-
 
 
 float SAH(const float3 & left_box, int left_cnt, const float3 & right_box, int right_cnt) {
@@ -53,7 +38,6 @@ float SAH(const float3 & left_box, int left_cnt, const float3 & right_box, int r
 }
 
 void copy_triangles(triangle * dest, triangle * src, int cnt) {
-	//dest = new triangle[cnt];
 	for (int i = 0; i < cnt; ++i) dest[i] = src[i];
 }
 
@@ -138,7 +122,6 @@ KDScene* buildKDScene(triangle * triangles, int tris_cnt, Vec * lights, int ligh
 }
 
 void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri, int right_tri, int depth) {
-	//printf("\nHEAP %d", _heapchk());
 	KDNode * node = &nodes[node_id];
 
 	node->left = right_tri;	// Предполагаем листовой узел
@@ -146,19 +129,16 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 
 	int tris_cnt = right_tri - left_tri;
 
-	//printf("\n%d (%d) : %d / %d", depth, node_id, node->left, node->right);
-
 	if (depth <= 0) {
 		return;
 	}
 
 	if (tris_cnt <= 0) {
-		printf("\n!!%d (%d) : %d / %d", depth, node_id, node->left, node->right);
 		node->left = -1;
 		node->right = -1;
 		return;
 	}
-	//printf("\nHEAP %d", _heapchk());
+
 	AABB bbox = getSceneAABB(triangles + left_tri, tris_cnt);	// (!) Локальный бокс может быть меньше глобального по всем осям
 	float3 * mid_points = new float3[tris_cnt];	// "центры" треугольников
 	for (int i = 0; i < tris_cnt; ++i) { 
@@ -167,7 +147,7 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 		if (fabs(mid_points[i].v[0]) < EPSILON)
 			int e = 3;
 	}
-	//printf("\nHEAP %d", _heapchk());
+
 	// Ищем оптимальное разбиение, используя разбиение на интервалы и SAH
 
 	// Берём наибольшую длину бокса в качестве проверяемой оси
@@ -175,7 +155,7 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 	float3 lengths = bbox.max - bbox.min;
 	if (lengths.v[Y] > lengths.v[split_axis]) split_axis = Y;
 	if (lengths.v[Z] > lengths.v[split_axis]) split_axis = Z;
-	//printf("\nHEAP %d", _heapchk());
+
 	// Подсчитываем кол-во треугольников в интервалах
 	float step = lengths.v[split_axis] / BINS_CNT;
 	int * bins_sizes = new int[BINS_CNT];	// массив количеств треугольников в интервалах
@@ -183,10 +163,8 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 	float coord = bbox.min.v[split_axis];
 	countBins(bins_sizes, BINS_CNT, mid_points, tris_cnt, bbox, split_axis);	// ??
 
-	//printf("\nHEAP %d", _heapchk());
-
 	delete[] mid_points;
-	//printf("\nHEAP %d", _heapchk());
+
 	// Считаем SAH для интервалов и выбираем лучшую плоскость
 	float min_SAH = tris_cnt * getSurfaceArea(bbox);
 	float cur_SAH;
@@ -213,41 +191,24 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 			min_left_cnt = left_cnt;
 		}
 	}
-	//printf("\nHEAP %d", _heapchk());
+
 	delete[] bins_sizes;
-	//printf("\nHEAP %d", _heapchk());
+
 	node->split_axis = split_axis;
 	node->split_coord = bbox.min.v[split_axis] + step * (split_plane + 1);
-	//for (int i = left_tri; i < right_tri; ++i)
-	//	printf("%5.3f %5.3f %5.3f\n", triangles[i].p[0].v[0], triangles[i].p[0].v[1], triangles[i].p[0].v[2]);
-	//printf("\n");
+
 	std::sort(triangles + left_tri, triangles + right_tri, tri_comp(split_axis));
 	
-	//for (int i = left_tri; i < right_tri; ++i)
-	//	printf("%5.3f %5.3f %5.3f\n", triangles[i].p[0].v[0], triangles[i].p[0].v[1], triangles[i].p[0].v[2]);
-	/*int cnt = 0;
-	for (int i = 0; i < tris_cnt; ++i) {
-		if (mid_points[i].v[split_axis] <= node->split_coord)
-			cnt++;
-	}
-	printf("\n%d - %d", min_left_cnt, cnt);
-	*/
-	//printf(" [%d, %5.3f]", split_axis, node->split_coord);
-
-	//delete[] mid_points;//bug here
-
 	// // Формируем левые и правые узлы
-	//printf("\nHEAP %d", _heapchk());
+
 	// Recursively create nodes
 	// Рекурсивно формируем узлы дерева
 	int right_id = (node_id + 1) * 2, 
 		left_id = right_id - 1;
-
 	node->left = left_id; node->right = right_id;
 	buildKDNode(nodes, left_id, triangles, left_tri, left_tri + min_left_cnt, depth-1);
-	//printf("\nHEAP %d", _heapchk());
 	buildKDNode(nodes, right_id, triangles, left_tri + min_left_cnt, right_tri, depth-1);
-	//printf("\nHEAP %d", _heapchk());
+
 	return;
 }
 

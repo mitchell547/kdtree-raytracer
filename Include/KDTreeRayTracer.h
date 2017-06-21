@@ -26,11 +26,11 @@ inline   bool Visible (const KDScene & scene, const float3 & hit, const float3 &
 inline   bool Visible (const KDScene & scene, const float3 & hit, const float3 & light, const int & tri_id, float3 & bari)
 {
 	double distToLight = hit.distance (light);
-	float3 hit1;//, bari1;
+	float3 hit1;
 	Vec sub = light - hit;
-	//Ray r (hit, sub);
 	sub.normalization();
 	Ray r (hit + sub * 0.001, sub);
+
 	double distance;
 	int id1 = -1;
 	int edgeHit;
@@ -42,10 +42,6 @@ inline   bool Visible (const KDScene & scene, const float3 & hit, const float3 &
 		if (distToLight + EPSILON < r.o.distance(hit1))
 			return true;
 		if (id == tri_id) return true;
-		/*for (int i = 0; i < 3; ++i)
-			if (tr->p[i] != tri.p[i]) 
-				return true;
-				*/
 		return false;
 	}
 
@@ -72,10 +68,7 @@ float3 calculateLighting(const KDScene & scene, const Ray & ray, const Vec & hit
 			float spec = pow(prod, tri.specular) * tri.specular;
 			specular += float3(spec, spec, spec);
 		}
-		else
-		{
-			//color = color*0.2;
-		}
+
 	}
 	return diffuse + specular;
 }
@@ -84,7 +77,6 @@ Vec RayTrace (const KDScene & scene, const Ray & ray,unsigned int deep) {
 	Vec color (0, 0, 0);
 	int id = 0;
 	float3 hit, bari;// найдем полигон
-	//double distanse ;
 	int edgeHit=0;
 	
 	int tri_id = traceKDScene(scene, ray, hit, bari, edgeHit);
@@ -109,25 +101,7 @@ Vec RayTrace (const KDScene & scene, const Ray & ray,unsigned int deep) {
 	*/
 
 	//color += calculateLighting(scene, ray, hit, id, bari);
-	/*unsigned int lC = wrld.lightsCount;
-	for (unsigned int i = 0; i < lC; ++i)
-	{//проверим освещенность
-		bool isVisible = Visible(root, wrld, hit, wrld.lights[i], *tr);
-		if (isVisible)
-		{
-			//float3 light = wrld.lights[i] - hit;
-			double distancei = wrld.lights[i].distance (hit);
-			//double cos = abs ((light.dot(tr->normal().normalization())) / (distancei));
-			color = color + color*(1 / (distancei*distancei));
-		}
-		else
-		{
-			color = color*0.2;
-		}
-	}*/
-
-	//	
-
+	
 	if (tri.reflect > 0 && deep > 0)//найдем отражение
 	{
 		Ray reflRay = reflect (ray, tri, hit, bari);
@@ -160,7 +134,7 @@ void SimpleRender (const KDScene & scene, const camera & cam, Vec c[], const img
 					Vec d = cam.cameraXangle*(((sx + .5) / 2 + x) / img.w - .5) +
 						cam.cameraYangle*(((sy + .5) / 2 + y) / img.h - .5) +
 						cam.cameraLocation.d;
-					//if (y == 240-140 && x == 120)
+
 					r += RayTrace(scene, Ray (cam.cameraLocation.o , d.normalization ()), REFLECTION_DEPTH);
 
 					c[i] += Vec (clamp (r.x), clamp (r.y), clamp (r.z))*k;
