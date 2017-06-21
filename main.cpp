@@ -39,7 +39,7 @@
 
 #include "Include/kdtree.h"
 #include "Include/BasicRayTracer.h"
-//#include "Include/KDTreeRayTracer.h"
+#include "Include/KDTreeRayTracer.h"
 
 // Cube model
 // Сцена с кубом
@@ -319,9 +319,9 @@ int main (int argc, char *argv[])
 	world wrld = world (objCount, lightsCount, obj, lights);
 	plyToMass (rabbit, wrld);
 
-	KDNode scene;
+	//KDNode scene;
 	double build_s = omp_get_wtime();
-	//buildKDTree(scene, wrld.objects, wrld.objCount, TREE_DEPTH);
+	KDScene * scene = buildKDScene(wrld.objects, wrld.objCount, wrld.lights, wrld.lightsCount, TREE_DEPTH);
 	double build_f = omp_get_wtime();
 	fprintf (stderr, "\rBuild time %5.3f\n", build_f-build_s);
 #endif
@@ -347,8 +347,7 @@ int main (int argc, char *argv[])
 		triangle (Vec (85, 180, 120), Vec (105, 180, 150), Vec (65, 180, 190), Vec (.70, .10, .10), 0.0),
 		triangle (Vec (85, 180, 120), Vec (105, 180, 150), Vec (65, 180, 190), Vec (.10, .10, .70), 0.0).moveX(20)};
 	world wrld = world (2, 1, tri, light);
-	KDNode scene;
-	buildKDTree(scene, wrld.objects, wrld.objCount, TREE_DEPTH);
+	KDScene * scene = buildKDScene(wrld.objects, wrld.objCount, wrld.lights, wrld.lightsCount, TREE_DEPTH);
 #endif
 
 	// Rendering

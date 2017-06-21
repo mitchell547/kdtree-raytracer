@@ -226,8 +226,25 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 	return;
 }
 
-int hasIntersection(triangle * tris, int left_id, int right_id, float3 & hit, float3 & bari) {
-	return -1;
+int hasIntersection(triangle * tris, int left_id, int right_id, const Ray & ray, float3 & hit, float3 & bari) {
+	float min_dist = INF;
+	int id = -1;
+	for (int i = left_id; i < right_id; ++i) {
+	#ifndef MOLLER_TRUMBORE_INTERSECT
+		//if (node->triangles[i].intersect(ray, hit)) {
+		assert(false);
+		{
+	#else
+		if (tris[i].mollerTrumboreIntersect(ray, hit, bari)) {
+	#endif
+			float dist = hit.distance(ray.o);
+			if (dist < min_dist) {
+				min_dist = dist;
+				id = i;
+			}
+		}
+	}
+	return id;
 }
 
 int traceKDScene(const KDScene & scene, const Ray & ray, float3 & hit, float3 & bari, bool & edgeHit) {
@@ -263,7 +280,7 @@ int traceKDScene(const KDScene & scene, const Ray & ray, float3 & hit, float3 & 
 
 		// В листовом узле ищем пересечение
 		float3 local_hit, local_bari;
-		int tri_id = hasIntersection(scene.triangles, node->right, node->left, local_hit, local_bari);
+		int tri_id = hasIntersection(scene.triangles, node->right, node->left, ray, local_hit, local_bari);
 		if (tri_id >= 0) {
 			float dist = ray.o.distance(local_hit);
 			if (dist < min_dist) {

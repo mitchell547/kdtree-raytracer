@@ -11,22 +11,22 @@
 
 // Main rendering method
 // Основной метод рендеринга сцены (трассировка всех лучей и получение цветов всех пикселей)
-void SimpleRender (const  KDNode &root, const  world & wrld, const camera & cam, Vec c[], const imgSettings & img);
+void SimpleRender (const KDScene & scene, const camera & cam, Vec c[], const imgSettings & img);
 
 // Single ray tracing
 // Трассировка конкретного луча по сцене (поиск пересечений, проверка освещённости, отражения луча)
-Vec RayTrace (const  KDNode &root, const  world  & wrld, const Ray & ray,unsigned int deep);
+Vec RayTrace (const KDScene & scene, const Ray & ray, unsigned int deep);
 
 // Check light source visibility
 // Проверка видимости источника света из точки пересечения
-inline   bool Visible (const KDNode & root, const  world & wrld, const float3 & hit, const Vec & light, const triangle & tri);
+inline   bool Visible (const KDScene & scene, const float3 & hit, const float3 & light, const int & tri, float3 & bari);
 
 
 
-inline   bool Visible (const KDNode & root, const  world & wrld, const float3 & hit, const Vec & light, const triangle & tri)
+inline   bool Visible (const KDScene & scene, const float3 & hit, const float3 & light, const int & tri_id, float3 & bari)
 {
 	double distToLight = hit.distance (light);
-	float3 hit1;
+	float3 hit1;//, bari1;
 	Vec sub = light - hit;
 	//Ray r (hit, sub);
 	sub.normalization();
@@ -34,40 +34,71 @@ inline   bool Visible (const KDNode & root, const  world & wrld, const float3 & 
 	double distance;
 	int id1 = -1;
 	bool edgeHit;
-	triangle *tr = traceKDTree(root, r, hit1, edgeHit);
-	if (tr == nullptr)
+	int id = traceKDScene(scene, r, hit1, bari, edgeHit);
+	triangle *tr = &scene.triangles[id];
+	if (id < 0)
 		return true;
 	else {
 		if (distToLight + EPSILON < r.o.distance(hit1))
 			return true;
-		for (int i = 0; i < 3; ++i)
+		if (id == tri_id) return true;
+		/*for (int i = 0; i < 3; ++i)
 			if (tr->p[i] != tri.p[i]) 
 				return true;
+				*/
 		return false;
 	}
 
 }
 
+float3 calculateLighting(const KDScene & scene, const Ray & ray, const Vec & hit, const int & id, const float3 & bari) {
+	triangle tri = scene.triangles[id];
+	float3 color = tri.c;
+	float3 diffuse, specular;
+	float3 _bari;
+	unsigned int lC = scene.lights_cnt;
+	for (unsigned int i = 0; i < lC; ++i)
+	{//проверим освещенность
+		bool isVisible = Visible(scene, hit, scene.lights[i], id, _bari);
+		if (isVisible)
+		{
+			float3 light_dir = (scene.lights[i] - hit).normalization();
+			float3 face_normal = smoothNormal(tri.v_n, bari);
+			diffuse = diffuse + color * max(0, face_normal.dot(light_dir)) * tri.diffuse;
 
+			float3 view_d = ray.d.norm(), 
+				refl_d = reflect(ray, tri, hit, _bari).d.norm();
+			float prod = max(0, view_d.dot(refl_d)); 
+			float spec = pow(prod, tri.specular) * tri.specular;
+			specular += float3(spec, spec, spec);
+		}
+		else
+		{
+			//color = color*0.2;
+		}
+	}
+	return diffuse + specular;
+}
 
-Vec RayTrace (const  KDNode &root, const  world  & wrld, const Ray & ray,unsigned int deep) {
+Vec RayTrace (const KDScene & scene, const Ray & ray,unsigned int deep) {
 	Vec color (0, 0, 0);
 	int id = 0;
 	float3 hit, bari;// найдем полигон
 	//double distanse ;
 	bool edgeHit;
 	
-	triangle *tr = traceKDTree(root, ray, hit, edgeHit);
+	int tri_id = traceKDScene(scene, ray, hit, bari, edgeHit);
 	
 	#ifdef TREE_VISUALISATION
 	if (edgeHit)
 		return Vec(0.8, 0.8, 0.8);
 	#endif
 
-	if (tr == nullptr)
+	if (tri_id < 0)
 		return color;
 	
-	color = tr->c;
+	triangle tri = scene.triangles[tri_id];
+	color = tri.c * 0.2;
 	
 	/*bool isIntersection = intersectHelper (wrld.objects, wrld.objCount, ray, distanse, id, hit);
 	for (int i = 0; i < 3; ++i)
@@ -76,7 +107,8 @@ Vec RayTrace (const  KDNode &root, const  world  & wrld, const Ray & ray,unsigne
 		}
 	*/
 
-	unsigned int lC = wrld.lightsCount;
+	color += calculateLighting(scene, ray, hit, id, bari);
+	/*unsigned int lC = wrld.lightsCount;
 	for (unsigned int i = 0; i < lC; ++i)
 	{//проверим освещенность
 		bool isVisible = Visible(root, wrld, hit, wrld.lights[i], *tr);
@@ -91,19 +123,19 @@ Vec RayTrace (const  KDNode &root, const  world  & wrld, const Ray & ray,unsigne
 		{
 			color = color*0.2;
 		}
-	}
+	}*/
 
 	//	
 
-	if (tr->reflect > 0 && deep > 0)//найдем отражение
+	if (tri.reflect > 0 && deep > 0)//найдем отражение
 	{
-		Ray reflRay = reflect (ray, *tr, hit, bari);
-		color = color*(1.0 - tr->reflect) + RayTrace(root, wrld, reflRay, deep-1)*tr->reflect;
+		Ray reflRay = reflect (ray, tri, hit, bari);
+		color = color*(1.0 - tri.reflect) + RayTrace(scene, reflRay, deep-1)*tri.reflect;
 	}
 	return color;
 }
 
-void SimpleRender (const  KDNode &root, const  world & wrld, const camera & cam, Vec c[], const imgSettings & img) {
+void SimpleRender (const KDScene & scene, const  world & wrld, const camera & cam, Vec c[], const imgSettings & img) {
 	Vec r; 
 	int i = 0;
 	#pragma omp parallel for schedule(dynamic, 2) private(r, i)       
@@ -126,7 +158,7 @@ void SimpleRender (const  KDNode &root, const  world & wrld, const camera & cam,
 						cam.cameraYangle*(((sy + .5) / 2 + y) / img.h - .5) +
 						cam.cameraLocation.d;
 
-					r += RayTrace(root, wrld, Ray (cam.cameraLocation.o , d.normalization ()), REFLECTION_DEPTH);
+					r += RayTrace(scene, Ray (cam.cameraLocation.o , d.normalization ()), REFLECTION_DEPTH);
 
 					c[i] += Vec (clamp (r.x), clamp (r.y), clamp (r.z))*k;
 				}
