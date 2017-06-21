@@ -14,6 +14,8 @@ struct KDNode {
 	float split_coord;	// координата плоскости разбиения
 	int left;	// Если left < right, то является внутернним узлом
 	int right;	// Если left >= right, то является листовым узлом
+	int * tri_ids;
+	int id_cnt;
 };
 
 struct KDScene {
@@ -33,6 +35,8 @@ int traceKDScene(const KDScene & scene, const Ray & ray, float3 & hit, float3 & 
 int traceKDScene(const KDScene & scene, int trace_node, const Ray & ray, float3 & hit, float3 & bari, int & edgeHit);
 
 void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri, int right_tri, int depth);
+
+void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, int id_cnt, int depth);
 
 
 
@@ -122,9 +126,11 @@ KDScene* buildKDScene(triangle * triangles, int tris_cnt, Vec * lights, int ligh
 	}
 
 	// Строим дерево
-
-	buildKDNode(scene->nodes, 0, scene->triangles, 0, tris_cnt, depth);
-
+	int * ids = new int[tris_cnt];
+	for (int i = 0; i < tris_cnt; ++i) ids[i] = i;
+	//buildKDNode(scene->nodes, 0, scene->triangles, 0, tris_cnt, depth);
+	buildKDNode(scene->nodes, 0, scene->triangles, ids, tris_cnt, depth);
+	delete[] ids;
 	return scene;
 }
 
@@ -151,8 +157,7 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 	for (int i = 0; i < tris_cnt; ++i) { 
 		AABB box = getTriangleAABB(triangles[i+left_tri]);
 		mid_points[i] = (box.max + box.min) / 2.0;
-		if (fabs(mid_points[i].v[0]) < EPSILON)
-			int e = 3;
+
 	}
 	//node->box = bbox;	// для теста
 	// Ищем оптимальное разбиение, используя разбиение на интервалы и SAH
@@ -162,7 +167,7 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 	float3 lengths = bbox.max - bbox.min;
 	if (lengths.v[Y] > lengths.v[split_axis]) split_axis = Y;
 	if (lengths.v[Z] > lengths.v[split_axis]) split_axis = Z;
-
+	
 	// Подсчитываем кол-во треугольников в интервалах
 	float step = lengths.v[split_axis] / BINS_CNT;
 	int * bins_sizes = new int[BINS_CNT];	// массив количеств треугольников в интервалах
@@ -219,6 +224,116 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 	return;
 }
 
+void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, int id_cnt, int depth) {
+	KDNode * node = &nodes[node_id];
+	node->id_cnt = 0;
+	node->left = 0;	// Предполагаем листовой узел
+	node->right = -1;
+
+	//int tris_cnt = right_tri - left_tri;
+
+	if (depth <= 0) {
+		//std::copy(ids, ids+id_cnt, node->tri_ids);
+		for (int i = 0; i < id_cnt; ++i) node->tri_ids[i] = ids[i];
+		node->id_cnt = id_cnt;
+		return;
+	}
+
+	if (id_cnt <= 0) {
+		node->left = -1;
+		node->right = -1;
+		return;
+	}
+
+	AABB bbox = getTriangleAABB(triangles[ids[0]]);
+	float3 * mid_points = new float3[id_cnt];	// "центры" треугольников
+	for (int i = 0; i < id_cnt; ++i) { 
+		AABB box = getTriangleAABB(triangles[ids[i]]);
+		addAABB(bbox, getTriangleAABB(triangles[ids[i]]));
+		mid_points[i] = (box.max + box.min) / 2.0;
+	}
+	//node->box = bbox;	// для теста
+	// Ищем оптимальное разбиение, используя разбиение на интервалы и SAH
+
+	// Берём наибольшую длину бокса в качестве проверяемой оси
+	AXIS split_axis = X;	// ось, по которой будем разбивать на интервалы 
+	float3 lengths = bbox.max - bbox.min;
+	if (lengths.v[Y] > lengths.v[split_axis]) split_axis = Y;
+	if (lengths.v[Z] > lengths.v[split_axis]) split_axis = Z;
+	
+	// Подсчитываем кол-во треугольников в интервалах
+	float step = lengths.v[split_axis] / BINS_CNT;
+	int * bins_sizes = new int[BINS_CNT];	// массив количеств треугольников в интервалах
+	for (int i = 0; i < BINS_CNT; ++i) bins_sizes[i] = 0;
+	float coord = bbox.min.v[split_axis];
+	countBins(bins_sizes, BINS_CNT, mid_points, id_cnt, bbox, split_axis);	// ??
+
+	delete[] mid_points;
+
+	// Считаем SAH для интервалов и выбираем лучшую плоскость
+	float min_SAH = id_cnt * getSurfaceArea(bbox);
+	float cur_SAH;
+	int split_plane = -1;		// индекс наилучшей плоскости разбиения
+	int left_cnt = 0, right_cnt = id_cnt;
+	int min_left_cnt = 0;	// количество треугольников слева от разбивающей плоскости
+	float3 left_box = getSizes(bbox), right_box = getSizes(bbox);
+	left_box.v[split_axis] = 0;	
+	
+	//   0 1 2 3 4 5 6 7 8 9 . . . . 14
+	// [-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-]  }16 bins
+	for (int i = 0; i < BINS_CNT-1; ++i) {
+		left_box.v[split_axis] += step;
+		right_box.v[split_axis] -= step;
+
+		left_cnt = left_cnt + bins_sizes[i];
+		right_cnt = right_cnt - bins_sizes[i];
+
+		cur_SAH = SAH(left_box, left_cnt, right_box, right_cnt);
+
+		if (cur_SAH < min_SAH) {
+			min_SAH = cur_SAH;
+			split_plane = i;
+			min_left_cnt = left_cnt;
+		}
+	}
+
+	delete[] bins_sizes;
+
+	node->split_axis = split_axis;
+	node->split_coord = bbox.min.v[split_axis] + step * (split_plane + 1);
+
+	// // Формируем левые и правые узлы
+
+	// Recursively create nodes
+	// Рекурсивно формируем узлы дерева
+	int * l_ids = new int[id_cnt];
+	int * r_ids = new int[id_cnt];
+	int lcnt = 0, rcnt = 0;
+	for (int i = 0; i < id_cnt; ++i) {
+		AABB box = getTriangleAABB(triangles[ids[i]]);
+		if (box.max.v[split_axis] <= node->split_coord) {
+			l_ids[lcnt] = i;
+			lcnt++;
+		}
+		if (box.min.v[split_axis] >= node->split_coord) {
+			r_ids[rcnt] = i;
+			rcnt++;
+		}
+	}
+
+	int right_id = (node_id + 1) * 2, 
+		left_id = right_id - 1;
+	node->left = left_id; node->right = right_id;
+	buildKDNode(nodes, left_id, triangles, l_ids, lcnt, depth-1);
+	delete[] l_ids;
+
+	buildKDNode(nodes, right_id, triangles, r_ids, rcnt, depth-1);
+	delete[] r_ids;
+	return;
+}
+
+
+
 int hasIntersection(triangle * tris, int left_id, int right_id, const Ray & ray, float & distance, float3 & hit, float3 & bari) {
 	float min_dist = INF;
 	int id = -1;
@@ -235,6 +350,31 @@ int hasIntersection(triangle * tris, int left_id, int right_id, const Ray & ray,
 			if (dist < min_dist) {
 				min_dist = dist;
 				id = i;
+				hit = localHit;
+				bari = localBari;
+			}
+		}
+	}
+	distance = min_dist;
+	return id;
+}
+
+int hasIntersection(triangle * tris, int * ids, int id_cnt, const Ray & ray, float & distance, float3 & hit, float3 & bari) {
+	float min_dist = INF;
+	int id = -1;
+	float3 localHit, localBari;
+	for (int i = 0; i < id_cnt; ++i) {
+	#ifndef MOLLER_TRUMBORE_INTERSECT
+		//if (node->triangles[i].intersect(ray, hit)) {
+		assert(false);
+		{
+	#else
+		if (tris[ids[i]].mollerTrumboreIntersect(ray, localHit, localBari)) {
+	#endif
+			float dist = localHit.distance(ray.o);
+			if (dist < min_dist) {
+				min_dist = dist;
+				id = ids[i];
 				hit = localHit;
 				bari = localBari;
 			}
@@ -301,7 +441,8 @@ int traceKDScene(const KDScene & scene, const Ray & ray, float3 & hit, float3 & 
 		// В листовом узле ищем пересечение
 		float3 local_hit, local_bari;
 		float dist;
-		int tri_id = hasIntersection(scene.triangles, node->right, node->left, ray, dist, local_hit, local_bari);
+		//int tri_id = hasIntersection(scene.triangles, node->right, node->left, ray, dist, local_hit, local_bari);
+		int tri_id = hasIntersection(scene.triangles, node->tri_ids, node->id_cnt, ray, dist, local_hit, local_bari);
 		if (tri_id >= 0) {
 			//dist = ray.o.distance(local_hit);
 			if (dist < min_dist) {
@@ -355,102 +496,3 @@ int traceKDScene(const KDScene & scene, int trace_node, const Ray & ray, float3 
 	}
 	return res_id;
 }
-
-/*triangle* traceKDTree(const KDNode &root, const Ray &ray, float3 &pHit, bool &edgeHit) {
-
-	edgeHit = false;
-
-	struct TraceInfo {
-		float tmax;
-		KDNode * node;
-	};
-
-	float tmin, tmax, tsplit;
-
-	// Check the global bounding box
-	// Проверка глобального бокса
-	bool isIntersect = RayAABBIntersect(ray, root.box, tmin, tmax);
-	if (!isIntersect)
-		return nullptr;
-	
-	std::stack<TraceInfo> s;
-
-	const KDNode * node; // Текущий узел
-	node = &root;
-
-	float min_dist = INF;
-	const KDNode * hit_node = node;
-	int id;
-	// Трассируем, пока не достигнем результата
-	while (true) {
-		#ifdef TREE_VISUALISATION
-		if (RayEdgeIntersect(ray, node->box, tmin) || RayEdgeIntersect(ray, node->box, tmax))
-			edgeHit = true;
-		#endif
-		
-		// Leaf node
-		// Листовой узел
-		while (node->left == nullptr && node->right == nullptr) {
-			float3 hit, bari;		
-			
-			for (int i = 0; i < node->tris_cnt; ++i) {
-			#ifndef MOLLER_TRUMBORE_INTERSECT
-				if (node->triangles[i].intersect(ray, hit)) {
-			#else
-				if (node->triangles[i].mollerTrumboreIntersect(ray, hit, bari)) {
-			#endif
-					float dist = hit.distance(ray.o);
-					if (dist < min_dist) {
-						min_dist = dist;
-						id = i;
-						hit_node = node;
-						pHit = hit;
-					}
-				}
-			}
-
-			if (s.empty()) {
-				if (min_dist < INF)
-					return &hit_node->triangles[id];
-				else
-					return nullptr;
-			}
-			// Возвращаем найденное пересечение, либо возвращаемся к стеку и трассируем дальше
-			//if (min_dist <= INF)
-			//	return &hit_node->triangles[id];
-			//else {
-			{
-
-				tmin = tmax;
-				TraceInfo ti;
-				ti = s.top();
-				node = ti.node;
-				tmax = ti.tmax;
-				s.pop();
-			}
-		}
-
-		tsplit = raySplitIntersect(ray, node->split_axis, node->split_coord);
-
-		if(tsplit <= tmin) {
-			node = node->left;
-		}
-		else if(tsplit >= tmax) {
-			node = node->right;
-		}
-		else {
-			TraceInfo ti;
-			ti.node = node->left;
-			ti.tmax = tmax;
-			s.push(ti);
-			node = node->right;
-			tmax = tsplit;
-		}
-	}
-
-	if (min_dist < INF)
-		return &hit_node->triangles[id];
-	else
-		return nullptr;
-}
-*/

@@ -23,7 +23,7 @@
 //#define sampling	// antialiasing
 #define MOLLER_TRUMBORE_INTERSECT
 #define REFLECTION_DEPTH 1
-#define TREE_DEPTH 1
+#define TREE_DEPTH 2
 
 // Choose model
 // (*) Выбор модели (одна из)
@@ -35,7 +35,7 @@
 // (*) Включение трассировки k-d дерева
 #define kdtrace
 
-//#define TREE_VISUALISATION	// для отладки
+#define TREE_VISUALISATION	// для отладки
 
 #include "Include/kdtree.h"
 #include "Include/BasicRayTracer.h"
@@ -43,7 +43,7 @@
 
 // Cube model
 // Сцена с кубом
-Vec lights[] = { Vec (10, 70, 35),
+Vec lights[] = { Vec (10, 70, 55),
 				Vec (60, 17, 7) };
 triangle obj[] = {
 	triangle (Vec (37, 25, -4), Vec (39, 25, -4), Vec (39, 27, -4), Vec (.0, .0, .50), 0),//back
