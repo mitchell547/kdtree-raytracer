@@ -51,9 +51,8 @@ float SAH(const float3 & left_box, int left_cnt, const float3 & right_box, int r
 }
 
 void copy_triangles(triangle * dest, triangle * src, int cnt) {
-	dest = new triangle[cnt];
-	for (int i = 0; i < cnt; ++i) 
-		dest[i] = src[i];
+	//dest = new triangle[cnt];
+	for (int i = 0; i < cnt; ++i) dest[i] = src[i];
 }
 
 float raySplitIntersect(const Ray & ray, AXIS a, float coord) {
@@ -65,23 +64,20 @@ AABB getSceneAABB(triangle * triangles, int tris_cnt) {
 	AABB box = getTriangleAABB(triangles[0]);
 	for (int i = 1; i < tris_cnt; ++i) 
 		addAABB(box, getTriangleAABB(triangles[i]));
-	return AABB();
+	return box;
 }
 
 void countBins(int * bins_sizes, int bins_cnt, float3 * mid_points, int points_cnt, AABB box, AXIS split_axis) {
 	float step = (box.max - box.min).v[split_axis] / BINS_CNT;
 	float coord = box.min.v[split_axis];
-
 	for (int i = 0; i < points_cnt; ++i) {
 		float point = mid_points[i].v[split_axis];
-
 		if (point <= coord + step) {
 			bins_sizes[0]++;
 		} else if (point > coord + step * (BINS_CNT-1)) {
 			bins_sizes[BINS_CNT-1]++;
 		} else {
 			float l_off = coord, r_off = coord + step;
-
 			for (int j = 1; j < BINS_CNT-1; ++j) {
 				l_off = l_off + step; r_off = r_off + step;
 				if (point > l_off && point <= r_off) {
@@ -89,7 +85,6 @@ void countBins(int * bins_sizes, int bins_cnt, float3 * mid_points, int points_c
 					break;
 				}
 			}
-
 		}
 	}
 }
@@ -97,7 +92,7 @@ void countBins(int * bins_sizes, int bins_cnt, float3 * mid_points, int points_c
 class tri_comp {
     AXIS axis;
 public:
-    tri_comp(AXIS axis0) : axis(axis0) {}
+    tri_comp(AXIS axis0=X) : axis(axis0) {}
 
     bool operator()(triangle & a, triangle & b) {
 		AABB box = getTriangleAABB(a);
@@ -108,6 +103,38 @@ public:
     }
 };
 
+KDScene* buildKDScene(triangle * triangles, int tris_cnt, Vec * lights, int light_cnt, int depth) {
+	// Подготовка
+
+	KDScene * scene = new KDScene();
+	scene->nodes = new KDNode[1 << (depth+1) - 1];	
+
+	if (light_cnt >= 0) {
+		scene->lights_cnt = light_cnt;
+		scene->lights = new float3[light_cnt];
+		for (int i = 0; i < light_cnt; ++i) scene->lights[i] = lights[i];
+	}
+
+	if (tris_cnt >= 0) {
+		scene->triangles = new triangle[tris_cnt];
+		copy_triangles(scene->triangles, triangles, tris_cnt);
+	}
+		
+	if (depth == 0 || tris_cnt == 0) {
+		// root is leaf node
+		scene->nodes[0].left = tris_cnt;
+		scene->nodes[0].right = 0;
+		return scene;
+	}
+
+	// Строим дерево
+
+	scene->bbox = getSceneAABB(triangles, tris_cnt);
+
+	buildKDNode(scene->nodes, 0, triangles, 0, tris_cnt, depth);
+
+	return scene;
+}
 
 void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri, int right_tri, int depth) {
 	KDNode * node = &nodes[node_id];
@@ -117,13 +144,19 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 
 	int tris_cnt = right_tri - left_tri;
 
-	if (depth <= 0 || tris_cnt <= 0) {
+	if (depth <= 0) {
+		return;
+	}
+
+	if (tris_cnt <= 0) {
+		node->left = -1;
+		node->right = -1;
 		return;
 	}
 
 	AABB bbox = getSceneAABB(triangles, tris_cnt);	// (!) Локальный бокс может быть меньше глобального по всем осям
 	float3 * mid_points = new float3[tris_cnt];	// "центры" треугольников
-	for (int i = left_tri; i <= right_tri; ++i) { 
+	for (int i = left_tri; i < right_tri; ++i) { 
 		AABB box = getTriangleAABB(triangles[i]);
 		mid_points[i] = (box.max + box.min) / 2.0;
 	}
@@ -141,7 +174,7 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 	int * bins_sizes = new int[BINS_CNT];	// массив количеств треугольников в интервалах
 	for (int i = 0; i < BINS_CNT; ++i) bins_sizes[i] = 0;
 	float coord = bbox.min.v[split_axis];
-	countBins(bins_sizes, BINS_CNT, mid_points + left_tri, tris_cnt + 1, bbox, split_axis);	// ??
+	countBins(bins_sizes, BINS_CNT, mid_points + left_tri, tris_cnt, bbox, split_axis);	// ??
 
 	// Считаем SAH для интервалов и выбираем лучшую плоскость
 	float min_SAH = tris_cnt * getSurfaceArea(bbox);
@@ -174,7 +207,7 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 
 	node->split_axis = split_axis;
 	node->split_coord = bbox.min.v[split_axis] + step * (split_plane + 1);
-	std::sort(triangles + left_tri, triangles + right_tri + 1, tri_comp(split_axis));
+	std::sort(triangles + left_tri, triangles + right_tri, tri_comp(split_axis));
 
 	// // Формируем левые и правые узлы
 
@@ -201,39 +234,14 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 	// Рекурсивно формируем узлы дерева
 	int right_id = (node_id + 1) * 2, 
 		left_id = right_id - 1;
+	node->left = left_id; node->right = right_id;
 	buildKDNode(nodes, left_id, triangles, left_tri, left_tri + min_left_cnt, depth-1);
-	buildKDNode(nodes, right_id, triangles, left_tri + min_left_cnt, right_tri, depth-1);
+	buildKDNode(nodes, right_id, triangles, left_tri + min_left_cnt + 1, right_tri, depth-1);
 
 	return;
 }
 
-KDScene* buildKDScene(triangle * triangles, int tris_cnt, float3 * lights, int light_cnt, int depth) {
-	// Подготовка
 
-	KDScene * scene = new KDScene();
-	scene->nodes = new KDNode[1 << (depth+1) - 1];	
-
-	std::copy(lights, lights+light_cnt, scene->lights);
-	scene->lights_cnt = light_cnt;
-
-	if (depth == 0 || tris_cnt == 0) {
-		copy_triangles(scene->triangles, triangles, tris_cnt);
-		// root is leaf node
-		scene->nodes[0].left = tris_cnt;
-		scene->nodes[0].right = 0;
-		return scene;
-	}
-
-
-	// Строим дерево
-
-	// Находим общий бокс сцены и считаем центры треугольников
-	scene->bbox = getSceneAABB(triangles, tris_cnt);
-
-	buildKDNode(scene->nodes, 0, triangles, 0, tris_cnt-1, depth);
-
-	return scene;
-}
 
 /*KDNode* buildKDTree(KDNode &root, triangle * triangles, int tri_cnt, int depth) {
 	//KDNode root;

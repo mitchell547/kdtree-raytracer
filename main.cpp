@@ -27,8 +27,8 @@
 
 // Choose model
 // (*) Выбор модели (одна из)
-#define rabbit_model
-//#define cube_model
+//#define rabbit_model
+#define cube_model
 //#define triangles_model
 
 // Using k-d tree tracing
@@ -335,8 +335,7 @@ int main (int argc, char *argv[])
 	world wrld = world (objCount, lightsCount, obj, lights);
 	//world wrld = world (12, 2, cube, lights);	// one cube
 	
-	KDNode scene;
-	buildKDTree(scene, obj, objCount, TREE_DEPTH);
+	KDScene * scene = buildKDScene(wrld.objects, wrld.objCount, wrld.lights, wrld.lightsCount, TREE_DEPTH);
 #endif
 
 	// Two triangles
