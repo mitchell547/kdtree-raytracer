@@ -234,6 +234,7 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, i
 
 	if (depth <= 0) {
 		//std::copy(ids, ids+id_cnt, node->tri_ids);
+		node->tri_ids = new int[id_cnt];
 		for (int i = 0; i < id_cnt; ++i) node->tri_ids[i] = ids[i];
 		node->id_cnt = id_cnt;
 		return;
@@ -419,13 +420,12 @@ int traceKDScene(const KDScene & scene, const Ray & ray, float3 & hit, float3 & 
 				r_id = node->left + (1-left_is_far);
 			// Проблема с длинными треугольниками:
 			// если они вылазят за границы своего узла, то пересечения не будет найдено
-			/*if (tsplit >= tmax || tsplit < 0) {
+			if (tsplit >= tmax || tsplit < 0) {
 				node = &scene.nodes[l_id];
 			} else if (tsplit <= tmin) {
 				node = &scene.nodes[r_id];
 			} else {
-			*/
-			{
+			
 				#ifdef TREE_VISUALISATION
 				// Визуализация плоскостей разбиения
 				if (RayEdgeIntersect(ray, node->split_axis, node->split_coord, tsplit)) 
