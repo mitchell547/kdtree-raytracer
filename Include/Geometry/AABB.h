@@ -137,3 +137,14 @@ bool RayEdgeIntersect(const Ray & ray, const AABB & box, float thit) {
 
 	return false;
 }
+
+bool RayEdgeIntersect(const Ray & ray, AXIS a, float coord, float thit) {
+	const float delta = 0.25;
+	float3 normdir = ray.d;
+	normdir.normalization();
+	float3 point = ray.o + normdir * thit;
+	if (fabs(point.v[a] - coord) < delta)
+		return true;
+
+	return false;
+}

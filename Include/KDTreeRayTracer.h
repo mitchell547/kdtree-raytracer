@@ -33,7 +33,7 @@ inline   bool Visible (const KDScene & scene, const float3 & hit, const float3 &
 	Ray r (hit + sub * 0.001, sub);
 	double distance;
 	int id1 = -1;
-	bool edgeHit;
+	int edgeHit;
 	int id = traceKDScene(scene, r, hit1, bari, edgeHit);
 	triangle *tr = &scene.triangles[id];
 	if (id < 0)
@@ -85,20 +85,21 @@ Vec RayTrace (const KDScene & scene, const Ray & ray,unsigned int deep) {
 	int id = 0;
 	float3 hit, bari;// найдем полигон
 	//double distanse ;
-	bool edgeHit;
+	int edgeHit=0;
 	
 	int tri_id = traceKDScene(scene, ray, hit, bari, edgeHit);
-	
+
 	#ifdef TREE_VISUALISATION
 	if (edgeHit)
-		return Vec(0.8, 0.8, 0.8);
+		//return Vec(0.8, 0.8, 0.8);
+		color = color + Vec(0.05, 0.05, 0.05) * edgeHit;
 	#endif
 
 	if (tri_id < 0)
 		return color;
 	
 	triangle tri = scene.triangles[tri_id];
-	color = tri.c * 0.2;
+	color += tri.c * 0.2;
 	
 	/*bool isIntersection = intersectHelper (wrld.objects, wrld.objCount, ray, distanse, id, hit);
 	for (int i = 0; i < 3; ++i)

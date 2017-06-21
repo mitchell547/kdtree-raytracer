@@ -37,7 +37,7 @@ struct KDScene {
 
 KDScene* buildKDScene(triangle * triangles, int tris_cnt, float3 lights, int light_cnt, int depth);
 
-int traceKDScene(const KDScene & scene, const Ray & ray, float3 & hit, float3 & bari, bool & edgeHit);
+int traceKDScene(const KDScene & scene, const Ray & ray, float3 & hit, float3 & bari, int & edgeHit);
 
 void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri, int right_tri, int depth);
 
@@ -159,8 +159,8 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 
 	AABB bbox = getSceneAABB(triangles, tris_cnt);	// (!) Локальный бокс может быть меньше глобального по всем осям
 	float3 * mid_points = new float3[tris_cnt];	// "центры" треугольников
-	for (int i = left_tri; i < right_tri; ++i) { 
-		AABB box = getTriangleAABB(triangles[i]);
+	for (int i = 0; i < tris_cnt; ++i) { 
+		AABB box = getTriangleAABB(triangles[i+left_tri]);
 		mid_points[i] = (box.max + box.min) / 2.0;
 	}
 
@@ -222,7 +222,7 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 		left_id = right_id - 1;
 	node->left = left_id; node->right = right_id;
 	buildKDNode(nodes, left_id, triangles, left_tri, left_tri + min_left_cnt, depth-1);
-	buildKDNode(nodes, right_id, triangles, left_tri + min_left_cnt + 1, right_tri, depth-1);
+	buildKDNode(nodes, right_id, triangles, left_tri + min_left_cnt, right_tri, depth-1);
 
 	return;
 }
@@ -248,7 +248,8 @@ int hasIntersection(triangle * tris, int left_id, int right_id, const Ray & ray,
 	return id;
 }
 
-int traceKDScene(const KDScene & scene, const Ray & ray, float3 & hit, float3 & bari, bool & edgeHit) {
+int traceKDScene(const KDScene & scene, const Ray & ray, float3 & hit, float3 & bari, int & edgeHit) {
+	edgeHit = 0;
 	float tmin, tmax;
 	if (!RayAABBIntersect(ray, scene.bbox, tmin, tmax))
 		return -1;
@@ -259,20 +260,34 @@ int traceKDScene(const KDScene & scene, const Ray & ray, float3 & hit, float3 & 
 		TraceInfo(int id, float t) : node(id), tmax(t) {};
 	};
 
+	#ifdef TREE_VISUALISATION
+	// Визуализация граней бокса
+	if (RayEdgeIntersect(ray, scene.bbox, tmin) || RayEdgeIntersect(ray, scene.bbox, tmax))
+			edgeHit+=2;	// для усиления подсвечиваемости
+	#endif
+
 	// Трассируем, начиная с корневого узла
 	KDNode * node = &scene.nodes[0];
 	std::stack<TraceInfo> s;
 	float min_dist = INF;
+	float tsplit;
 	int res_id = -1;
 	while (true) {
 		// Спускаемся до листового узла
 		while (node->left < node->right) {
-			float tsplit = raySplitIntersect(ray, node->split_axis, node->split_coord);
+			tsplit = raySplitIntersect(ray, node->split_axis, node->split_coord);
 			if (tsplit <= tmin) {
 				node = &scene.nodes[node->right];
 			} else if (tsplit >= tmax) {
 				node = &scene.nodes[node->left];
 			} else {
+
+				#ifdef TREE_VISUALISATION
+				// Визуализация плоскостей разбиения
+				if (RayEdgeIntersect(ray, node->split_axis, node->split_coord, tsplit)) 
+						edgeHit++;	
+				#endif
+
 				s.push(TraceInfo(node->right, tmax));
 				tmax = tsplit;
 				node = &scene.nodes[node->left];
