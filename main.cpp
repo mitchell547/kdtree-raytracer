@@ -23,7 +23,7 @@
 //#define sampling	// antialiasing
 #define MOLLER_TRUMBORE_INTERSECT
 #define REFLECTION_DEPTH 1
-#define TREE_DEPTH 2
+#define TREE_DEPTH 4
 
 // Choose model
 // (*) Выбор модели (одна из)

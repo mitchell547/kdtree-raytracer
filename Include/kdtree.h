@@ -265,9 +265,14 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, i
 	// Берём наибольшую длину бокса в качестве проверяемой оси
 	AXIS split_axis = X;	// ось, по которой будем разбивать на интервалы 
 	float3 lengths = bbox.max - bbox.min;
+	/*KDNode * parent = &nodes[(node_id + 1) / 2 - 1];
+	if (parent->split_axis == X) split_axis = Y;
+	if (parent->split_axis != Y && lengths.v[Y] > lengths.v[split_axis]) split_axis = Y;
+	if (parent->split_axis != Z && lengths.v[Z] > lengths.v[split_axis]) split_axis = Z;
+	*/
 	if (lengths.v[Y] > lengths.v[split_axis]) split_axis = Y;
 	if (lengths.v[Z] > lengths.v[split_axis]) split_axis = Z;
-	
+
 	// Подсчитываем кол-во треугольников в интервалах
 	float step = lengths.v[split_axis] / BINS_CNT;
 	int * bins_sizes = new int[BINS_CNT];	// массив количеств треугольников в интервалах
@@ -307,6 +312,10 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, i
 	node->split_axis = split_axis;
 	node->split_coord = bbox.min.v[split_axis] + step * (split_plane + 1);
 
+	//printf("\n\n--- %d ---\n", node_id);
+	//for (int i = 0; i < id_cnt; ++i)
+	//	printf("%d, ", ids[i]);
+
 	// // Формируем левые и правые узлы
 
 	// Recursively create nodes
@@ -316,11 +325,13 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, i
 	int lcnt = 0, rcnt = 0;
 	for (int i = 0; i < id_cnt; ++i) {
 		AABB box = getTriangleAABB(triangles[ids[i]]);
-		if (mid_points[i].v[split_axis] <= node->split_coord) {
+		//if (mid_points[i].v[split_axis] <= node->split_coord) {
+		if (box.min.v[split_axis] <= node->split_coord) {
 			l_ids[lcnt] = ids[i];
 			lcnt++;
 		}
-		if (mid_points[i].v[split_axis] >= node->split_coord) {
+		//if (mid_points[i].v[split_axis] >= node->split_coord) {
+		if (box.max.v[split_axis] >= node->split_coord) {
 			r_ids[rcnt] = ids[i];
 			rcnt++;
 		}
@@ -419,9 +430,12 @@ int traceKDScene(const KDScene & scene, const Ray & ray, float3 & hit, float3 & 
 		// Спускаемся до листового узла
 		while (node->left < node->right) {
 			tsplit = raySplitIntersect(ray, node->split_axis, node->split_coord);
+			//int left_is_far = 0;
 			int left_is_far = (node->split_coord > ray.o.v[node->split_axis]) ? 0 : 1;
 			//int left_is_far = (node->split_coord < (ray.o + ray.d.norm() * tmin).v[node->split_axis]) ? 0 : 1;
 			//int left_is_far = (ray.d.v[node->split_axis] < 0) ? 1 : 0;
+			//if (node->split_coord < ray.o.v[node->split_axis] != ray.d.v[node->split_axis] < 0)
+			//	int q = 1;
 			int l_id = node->left + left_is_far, 
 				r_id = node->left + (1-left_is_far);
 			// Проблема с длинными треугольниками:
