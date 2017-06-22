@@ -201,7 +201,7 @@ int Model_PLY::Load (char* filename) {
 	for (int f = 0; f < TotalConnectedPoints; f++)
 	{
 		if (normals[f].x == 0 && normals[f].y == 0 && normals[f].z == 0) {
-			printf("\nZero normal at vertex #%d!", f);
+			//printf("\nZero normal at vertex #%d!", f);
 			//assert(false);
 			continue;
 		}

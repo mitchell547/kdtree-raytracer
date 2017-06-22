@@ -241,12 +241,14 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, i
 		node->tri_ids = new int[id_cnt];
 		for (int i = 0; i < id_cnt; ++i) node->tri_ids[i] = ids[i];
 		node->id_cnt = id_cnt;
+		//printf("\n(%d) %d : %d [%d]", depth, node_id, id_cnt, ids[0]);
 		return;
 	}
 
 	if (id_cnt <= 0) {
 		node->left = -1;
 		node->right = -1;
+		//printf("\n(%d) %d : %d [%d]", depth, node_id, id_cnt, ids[0]);
 		return;
 	}
 
@@ -272,8 +274,6 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, i
 	for (int i = 0; i < BINS_CNT; ++i) bins_sizes[i] = 0;
 	float coord = bbox.min.v[split_axis];
 	countBins(bins_sizes, BINS_CNT, mid_points, id_cnt, bbox, split_axis);	// ??
-
-	delete[] mid_points;
 
 	// Считаем SAH для интервалов и выбираем лучшую плоскость
 	float min_SAH = id_cnt * getSurfaceArea(bbox);
@@ -316,15 +316,16 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, i
 	int lcnt = 0, rcnt = 0;
 	for (int i = 0; i < id_cnt; ++i) {
 		AABB box = getTriangleAABB(triangles[ids[i]]);
-		if (box.min.v[split_axis] <= node->split_coord) {
-			l_ids[lcnt] = i;
+		if (mid_points[i].v[split_axis] <= node->split_coord) {
+			l_ids[lcnt] = ids[i];
 			lcnt++;
 		}
-		if (box.max.v[split_axis] >= node->split_coord) {
-			r_ids[rcnt] = i;
+		if (mid_points[i].v[split_axis] >= node->split_coord) {
+			r_ids[rcnt] = ids[i];
 			rcnt++;
 		}
 	}
+	delete[] mid_points;
 
 	int right_id = (node_id + 1) * 2, 
 		left_id = right_id - 1;
@@ -334,6 +335,7 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, i
 
 	buildKDNode(nodes, right_id, triangles, r_ids, rcnt, depth-1);
 	delete[] r_ids;
+	//printf("\n(%d) %d : %d [%d]", depth, node_id, id_cnt, ids[0]);
 	return;
 }
 
@@ -424,6 +426,7 @@ int traceKDScene(const KDScene & scene, const Ray & ray, float3 & hit, float3 & 
 				r_id = node->left + (1-left_is_far);
 			// Проблема с длинными треугольниками:
 			// если они вылазят за границы своего узла, то пересечения не будет найдено
+			// (решается с помощью массива индексов)
 			if (tsplit >= tmax || tsplit < 0) {
 				node = &scene.nodes[l_id];
 			} else if (tsplit <= tmin) {
@@ -480,7 +483,7 @@ int traceKDScene(const KDScene & scene, int trace_node, const Ray & ray, float3 
 
 	float dist;
 	if (isLeafNode(*node))
-		return hasIntersection(scene.triangles, node->right, node->left, ray, dist, hit, bari);
+		return hasIntersection(scene.triangles, node->tri_ids, node->id_cnt, ray, dist, hit, bari);
 
 	// (!)
 	/*if (!RayAABBIntersect(ray, node->box, tmin, tmax))
