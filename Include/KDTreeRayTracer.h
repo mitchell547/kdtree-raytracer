@@ -58,6 +58,9 @@ float3 calculateLighting(const KDScene & scene, const Ray & ray, const Vec & hit
 		bool isVisible = Visible(scene, hit, scene.lights[i], id, _bari);
 		if (isVisible)
 		{
+			//double distancei = scene.lights[i].distance (hit);
+			//color = color + color*(1 / (distancei*distancei));
+
 			float3 light_dir = (scene.lights[i] - hit).normalization();
 			float3 face_normal = smoothNormal(tri.v_n, bari);
 			diffuse = diffuse + color * max(0, face_normal.dot(light_dir)) * tri.diffuse;
@@ -71,11 +74,12 @@ float3 calculateLighting(const KDScene & scene, const Ray & ray, const Vec & hit
 
 	}
 	return diffuse + specular;
+	//return color;
 }
 
 Vec RayTrace (const KDScene & scene, const Ray & ray,unsigned int deep) {
 	Vec color (0, 0, 0);
-	int id = 0;
+	//int id = 0;
 	float3 hit, bari;// найдем полигон
 	int edgeHit=0;
 	
@@ -86,26 +90,21 @@ Vec RayTrace (const KDScene & scene, const Ray & ray,unsigned int deep) {
 		//return Vec(0.8, 0.8, 0.8);
 		color = color + Vec(0.05, 0.05, 0.05) * edgeHit;
 	#endif
-	//color = Vec(1,1,1);
+
 	if (tri_id < 0)
 		return color;
 	
 	triangle tri = scene.triangles[tri_id];
 	color += tri.c * 0.2;
 	
-	/*bool isIntersection = intersectHelper (wrld.objects, wrld.objCount, ray, distanse, id, hit);
-	for (int i = 0; i < 3; ++i)
-		if (tr->p[i] != wrld.objects[id].p[i]) {
-		//	assert(false);
-		}
-	*/
+	
 
-	//color += calculateLighting(scene, ray, hit, id, bari);
+	color += calculateLighting(scene, ray, hit, tri_id, bari);
 	
 	if (tri.reflect > 0 && deep > 0)//найдем отражение
 	{
 		Ray reflRay = reflect (ray, tri, hit, bari);
-		//color = color*(1.0 - tri.reflect) + RayTrace(scene, reflRay, deep-1)*tri.reflect;
+		color = color*(1.0 - tri.reflect) + RayTrace(scene, reflRay, deep-1)*tri.reflect;
 	}
 	
 	return color;

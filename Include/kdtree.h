@@ -215,18 +215,21 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 int hasIntersection(triangle * tris, int left_id, int right_id, const Ray & ray, float & distance, float3 & hit, float3 & bari) {
 	float min_dist = INF;
 	int id = -1;
+	float3 localHit, localBari;
 	for (int i = left_id; i < right_id; ++i) {
 	#ifndef MOLLER_TRUMBORE_INTERSECT
 		//if (node->triangles[i].intersect(ray, hit)) {
 		assert(false);
 		{
 	#else
-		if (tris[i].mollerTrumboreIntersect(ray, hit, bari)) {
+		if (tris[i].mollerTrumboreIntersect(ray, localHit, localBari)) {
 	#endif
-			float dist = hit.distance(ray.o);
+			float dist = localHit.distance(ray.o);
 			if (dist < min_dist) {
 				min_dist = dist;
 				id = i;
+				hit = localHit;
+				bari = localBari;
 			}
 		}
 	}
@@ -294,7 +297,8 @@ int traceKDScene(const KDScene & scene, const Ray & ray, float3 & hit, float3 & 
 				hit = local_hit;
 				bari = local_bari;
 				res_id = tri_id;
-				return res_id;
+				if (dist <= tmax)
+					return res_id;
 			}
 		} 
 
