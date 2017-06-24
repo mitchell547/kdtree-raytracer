@@ -24,7 +24,7 @@
 //#define sampling	// antialiasing
 #define MOLLER_TRUMBORE_INTERSECT
 #define REFLECTION_DEPTH 1
-#define TREE_DEPTH 3
+#define TREE_DEPTH 4
 
 // Choose model
 // (*) Выбор модели (одна из)
@@ -291,6 +291,28 @@ triangle cube[] = {
 	triangle (Vec (15, 5, 5), Vec (15, 15, 5), Vec (15, 15, 15), Vec (.0, .50, .10), 0).moveX (15),//right
 };
 
+void print_render_info(int w, int h) {
+	printf("\tRender info:\n");
+	printf("* Image size: %dx%d\n", w, h);
+#ifdef sampling
+	printf("* Sampling is ON\n");
+#else
+	printf("* Sampling is OFF\n");
+#endif
+#ifdef kdtrace
+	printf("* K-d tree is used (max depth: %d)\n", TREE_DEPTH);
+#else
+	printf("* K-d tree is NOT used\n");
+#endif
+	printf("* Depth of reflections: %d\n\n", REFLECTION_DEPTH);
+}
+
+void print_model_info(world & w) {
+	printf("\tModel info:\n");
+	printf("* Triangles count: %d\n", w.objCount);
+	printf("* Lights count: %d\n\n", w.lightsCount);
+}
+
 int main (int argc, char *argv[])
 {
 	// Image settings
@@ -304,6 +326,8 @@ int main (int argc, char *argv[])
 	// Выходное изображение
 	Vec  r, *c = new Vec[w*h];
 	imgSettings img = imgSettings (w, h, samps);
+
+	print_render_info(w, h);
 
 	// 3D Scenes:
 	// Сцены:
@@ -320,11 +344,13 @@ int main (int argc, char *argv[])
 	world wrld = world (objCount, lightsCount, obj, lights);
 	plyToMass (rabbit, wrld);
 
+	print_model_info(wrld);
+
 	//KDNode scene;
 	double build_s = omp_get_wtime();
 	KDScene * scene = buildKDScene(wrld.objects, wrld.objCount, wrld.lights, wrld.lightsCount, TREE_DEPTH);
 	double build_f = omp_get_wtime();
-	fprintf (stderr, "\r\nBuild time %5.3f\n", build_f-build_s);
+	fprintf (stderr, "\r\nK-d tree build time %5.3f\n", build_f-build_s);
 #endif
 
 	// // Модель куба
@@ -361,7 +387,7 @@ int main (int argc, char *argv[])
 	#endif
 	double end = omp_get_wtime ();
 
-	fprintf (stderr, "\nElapsed time %5.3f", end-start);
+	fprintf (stderr, "\nRender finished inf %5.3fs", end-start);
 
 	// Output
 	// Вывод
