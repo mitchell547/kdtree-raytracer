@@ -133,7 +133,7 @@ void SimpleRender (const KDScene & scene, const camera & cam, Vec c[], const img
 					Vec d = cam.cameraXangle*(((sx + .5) / 2 + x) / img.w - .5) +
 						cam.cameraYangle*(((sy + .5) / 2 + y) / img.h - .5) +
 						cam.cameraLocation.d;
-					//if (x == 100 && y == 240-50)
+					//if (x == 170 && y == 240-110)
 					r += RayTrace(scene, Ray (cam.cameraLocation.o , d.normalization ()), REFLECTION_DEPTH);
 
 					c[i] += Vec (clamp (r.x), clamp (r.y), clamp (r.z))*k;

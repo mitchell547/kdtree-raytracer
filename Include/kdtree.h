@@ -36,7 +36,7 @@ int traceKDScene(const KDScene & scene, int trace_node, const Ray & ray, float3 
 
 void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri, int right_tri, int depth);
 
-void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, int id_cnt, int depth);
+void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, int id_cnt, int depth, float prevSAH);
 
 
 
@@ -133,7 +133,7 @@ KDScene* buildKDScene(triangle * triangles, int tris_cnt, Vec * lights, int ligh
 	int * ids = new int[tris_cnt];
 	for (int i = 0; i < tris_cnt; ++i) ids[i] = i;
 	//buildKDNode(scene->nodes, 0, scene->triangles, 0, tris_cnt, depth);
-	buildKDNode(scene->nodes, 0, scene->triangles, ids, tris_cnt, depth);
+	buildKDNode(scene->nodes, 0, scene->triangles, ids, tris_cnt, depth, INF);
 	delete[] ids;
 	return scene;
 }
@@ -228,7 +228,7 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 	return;
 }
 
-void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, int id_cnt, int depth) {
+void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, int id_cnt, int depth, float prevSAH) {
 	KDNode * node = &nodes[node_id];
 	node->id_cnt = 0;
 	node->left = 0;	// Предполагаем листовой узел
@@ -265,13 +265,13 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, i
 	// Берём наибольшую длину бокса в качестве проверяемой оси
 	AXIS split_axis = X;	// ось, по которой будем разбивать на интервалы 
 	float3 lengths = bbox.max - bbox.min;
-	/*KDNode * parent = &nodes[(node_id + 1) / 2 - 1];
+	KDNode * parent = &nodes[(node_id + 1) / 2 - 1];
 	if (parent->split_axis == X) split_axis = Y;
 	if (parent->split_axis != Y && lengths.v[Y] > lengths.v[split_axis]) split_axis = Y;
 	if (parent->split_axis != Z && lengths.v[Z] > lengths.v[split_axis]) split_axis = Z;
-	*/
-	if (lengths.v[Y] > lengths.v[split_axis]) split_axis = Y;
-	if (lengths.v[Z] > lengths.v[split_axis]) split_axis = Z;
+	
+	//if (lengths.v[Y] > lengths.v[split_axis]) split_axis = Y;
+	//if (lengths.v[Z] > lengths.v[split_axis]) split_axis = Z;
 
 	// Подсчитываем кол-во треугольников в интервалах
 	float step = lengths.v[split_axis] / BINS_CNT;
@@ -281,7 +281,8 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, i
 	countBins(bins_sizes, BINS_CNT, mid_points, id_cnt, bbox, split_axis);	// ??
 
 	// Считаем SAH для интервалов и выбираем лучшую плоскость
-	float min_SAH = id_cnt * getSurfaceArea(bbox);
+	//float min_SAH = id_cnt * getSurfaceArea(bbox);
+	float min_SAH = prevSAH;
 	float cur_SAH;
 	int split_plane = -1;		// индекс наилучшей плоскости разбиения
 	int left_cnt = 0, right_cnt = id_cnt;
@@ -306,12 +307,26 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, i
 			min_left_cnt = left_cnt;
 		}
 	}
-
 	delete[] bins_sizes;
 
 	node->split_axis = split_axis;
 	node->split_coord = bbox.min.v[split_axis] + step * (split_plane + 1);
 
+	//KDNode * par_parent = &nodes[(node_id + 1) / 4 - 1];
+	
+	if (min_SAH + 10000.0 >= prevSAH || 
+		(split_axis == parent->split_axis && node->split_coord == parent->split_coord) || 
+		((node_id % 2) == 0 && node_id > 2 && split_axis == nodes[node_id-1].split_axis 
+			&& node->split_coord == nodes[node_id-1].split_coord)) {
+		node->left = 0;	
+		node->right = -1;
+		node->tri_ids = new int[id_cnt];
+		for (int i = 0; i < id_cnt; ++i) node->tri_ids[i] = ids[i];
+		node->id_cnt = id_cnt;
+		return;
+	}
+	//printf("\n%d : %d %d %f %f", node_id, split_axis, split_plane, min_SAH, node->split_coord);
+	
 	//printf("\n\n--- %d ---\n", node_id);
 	//for (int i = 0; i < id_cnt; ++i)
 	//	printf("%d, ", ids[i]);
@@ -341,10 +356,10 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, i
 	int right_id = (node_id + 1) * 2, 
 		left_id = right_id - 1;
 	node->left = left_id; node->right = right_id;
-	buildKDNode(nodes, left_id, triangles, l_ids, lcnt, depth-1);
+	buildKDNode(nodes, left_id, triangles, l_ids, lcnt, depth-1, min_SAH);
 	delete[] l_ids;
 
-	buildKDNode(nodes, right_id, triangles, r_ids, rcnt, depth-1);
+	buildKDNode(nodes, right_id, triangles, r_ids, rcnt, depth-1, min_SAH);
 	delete[] r_ids;
 	//printf("\n(%d) %d : %d [%d]", depth, node_id, id_cnt, ids[0]);
 	return;

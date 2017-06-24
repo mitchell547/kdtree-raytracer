@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <math.h>   
 #include <stdlib.h> 
@@ -23,7 +24,7 @@
 //#define sampling	// antialiasing
 #define MOLLER_TRUMBORE_INTERSECT
 #define REFLECTION_DEPTH 1
-#define TREE_DEPTH 4
+#define TREE_DEPTH 3
 
 // Choose model
 // (*) Выбор модели (одна из)
@@ -323,7 +324,7 @@ int main (int argc, char *argv[])
 	double build_s = omp_get_wtime();
 	KDScene * scene = buildKDScene(wrld.objects, wrld.objCount, wrld.lights, wrld.lightsCount, TREE_DEPTH);
 	double build_f = omp_get_wtime();
-	fprintf (stderr, "\rBuild time %5.3f\n", build_f-build_s);
+	fprintf (stderr, "\r\nBuild time %5.3f\n", build_f-build_s);
 #endif
 
 	// // Модель куба
