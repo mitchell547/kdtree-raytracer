@@ -36,7 +36,7 @@ int traceKDScene(const KDScene & scene, int trace_node, const Ray & ray, float3 
 
 void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri, int right_tri, int depth);
 
-void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, int id_cnt, int depth, float prevSAH);
+void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, int id_cnt, int depth, float prevSAH, AABB aabb);
 
 
 
@@ -132,8 +132,15 @@ KDScene* buildKDScene(triangle * triangles, int tris_cnt, Vec * lights, int ligh
 	// Строим дерево
 	int * ids = new int[tris_cnt];
 	for (int i = 0; i < tris_cnt; ++i) ids[i] = i;
+
+	AABB bbox = getTriangleAABB(triangles[0]);
+	for (int i = 1; i < tris_cnt; ++i) { 
+		AABB box = getTriangleAABB(triangles[ids[i]]);
+		addAABB(bbox, box);
+	}
+
 	//buildKDNode(scene->nodes, 0, scene->triangles, 0, tris_cnt, depth);
-	buildKDNode(scene->nodes, 0, scene->triangles, ids, tris_cnt, depth, INF);
+	buildKDNode(scene->nodes, 0, scene->triangles, ids, tris_cnt, depth, INF, bbox);
 	delete[] ids;
 	return scene;
 }
@@ -228,7 +235,7 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int left_tri
 	return;
 }
 
-void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, int id_cnt, int depth, float prevSAH) {
+void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, int id_cnt, int depth, float prevSAH, AABB aabb) {
 	KDNode * node = &nodes[node_id];
 	node->id_cnt = 0;
 	node->left = 0;	// Предполагаем листовой узел
@@ -259,6 +266,7 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, i
 		addAABB(bbox, box);
 		mid_points[i] = (box.max + box.min) / 2.0;
 	}
+	bbox = aabb;
 	//node->box = bbox;	// для теста
 	// Ищем оптимальное разбиение, используя разбиение на интервалы и SAH
 
@@ -312,8 +320,6 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, i
 	node->split_axis = split_axis;
 	node->split_coord = bbox.min.v[split_axis] + step * (split_plane + 1);
 
-	//KDNode * par_parent = &nodes[(node_id + 1) / 4 - 1];
-	
 	if (min_SAH + 10000.0 >= prevSAH || 
 		(split_axis == parent->split_axis && node->split_coord == parent->split_coord) || 
 		((node_id % 2) == 0 && node_id > 2 && split_axis == nodes[node_id-1].split_axis 
@@ -325,12 +331,7 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, i
 		node->id_cnt = id_cnt;
 		return;
 	}
-	//printf("\n%d : %d %d %f %f", node_id, split_axis, split_plane, min_SAH, node->split_coord);
 	
-	//printf("\n\n--- %d ---\n", node_id);
-	//for (int i = 0; i < id_cnt; ++i)
-	//	printf("%d, ", ids[i]);
-
 	// // Формируем левые и правые узлы
 
 	// Recursively create nodes
@@ -340,12 +341,10 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, i
 	int lcnt = 0, rcnt = 0;
 	for (int i = 0; i < id_cnt; ++i) {
 		AABB box = getTriangleAABB(triangles[ids[i]]);
-		//if (mid_points[i].v[split_axis] <= node->split_coord) {
 		if (box.min.v[split_axis] <= node->split_coord) {
 			l_ids[lcnt] = ids[i];
 			lcnt++;
 		}
-		//if (mid_points[i].v[split_axis] >= node->split_coord) {
 		if (box.max.v[split_axis] >= node->split_coord) {
 			r_ids[rcnt] = ids[i];
 			rcnt++;
@@ -356,12 +355,16 @@ void buildKDNode(KDNode * nodes, int node_id, triangle * triangles, int * ids, i
 	int right_id = (node_id + 1) * 2, 
 		left_id = right_id - 1;
 	node->left = left_id; node->right = right_id;
-	buildKDNode(nodes, left_id, triangles, l_ids, lcnt, depth-1, min_SAH);
+	AABB lbox = bbox;
+	lbox.max.v[split_axis] = node->split_coord;
+	buildKDNode(nodes, left_id, triangles, l_ids, lcnt, depth-1, min_SAH, lbox);
 	delete[] l_ids;
 
-	buildKDNode(nodes, right_id, triangles, r_ids, rcnt, depth-1, min_SAH);
+	AABB rbox = bbox;
+	rbox.min.v[split_axis] = node->split_coord;
+	buildKDNode(nodes, right_id, triangles, r_ids, rcnt, depth-1, min_SAH, rbox);
 	delete[] r_ids;
-	//printf("\n(%d) %d : %d [%d]", depth, node_id, id_cnt, ids[0]);
+
 	return;
 }
 

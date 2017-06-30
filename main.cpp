@@ -12,19 +12,17 @@
 #include "Include/Misc/Ply.hpp"
 #include "Include/raytracer_misc.h"
 #include "Include/World.hpp"
-//#define EPSILON 0.000000001
 #define INF 1e20
-//#define standartTest //  or... (ray triangle test)
-//#define baricentTest
+
 
 
 // Render settings:
 // "Настройки" рендера:
 
-//#define sampling	// antialiasing
+#define sampling	// antialiasing
 #define MOLLER_TRUMBORE_INTERSECT
-#define REFLECTION_DEPTH 1
-#define TREE_DEPTH 4
+#define REFLECTION_DEPTH 2
+#define TREE_DEPTH 16
 
 // Choose model
 // (*) Выбор модели (одна из)
@@ -318,8 +316,10 @@ int main (int argc, char *argv[])
 	// Image settings
 	// Параметры изображения
 	//int w = 1024, h = 768;
-	//int w = 640, h = 480;
-	int w = 320, h = 240;
+	int w = 640, h = 480;
+	//int w = 512, h = 512;
+	//int w = 320, h = 240;
+	//int w = 256, h = 256;
 	int samps = argc == 2 ? atoi (argv[1]) / 4 : 1; // # samples 
 
 	// Output image
@@ -387,7 +387,7 @@ int main (int argc, char *argv[])
 	#endif
 	double end = omp_get_wtime ();
 
-	fprintf (stderr, "\nRender finished inf %5.3fs", end-start);
+	fprintf (stderr, "\nRender finished in %5.3fs", end-start);
 
 	// Output
 	// Вывод
