@@ -96,8 +96,6 @@ Vec RayTrace (const KDScene & scene, const Ray & ray,unsigned int deep) {
 	
 	triangle tri = scene.triangles[tri_id];
 	color += tri.c * 0.2;
-	
-	
 
 	color += calculateLighting(scene, ray, hit, tri_id, bari);
 	
@@ -105,6 +103,12 @@ Vec RayTrace (const KDScene & scene, const Ray & ray,unsigned int deep) {
 	{
 		Ray reflRay = reflect (ray, tri, hit, bari);
 		color = color*(1.0 - tri.reflect) + RayTrace(scene, reflRay, deep-1)*tri.reflect;
+	}
+
+	if (tri.refraction > 0 && deep > 0) {
+		Ray refrRay = refract(ray, tri, hit, bari);
+		if (refrRay.d.v[0] != 0 && refrRay.d.v[1] != 0 && refrRay.d.v[2] != 0)
+			color = color*(1.0 - tri.refraction) + RayTrace(scene, refrRay, deep-1)*tri.refraction;
 	}
 	
 	return color;

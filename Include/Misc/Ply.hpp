@@ -270,7 +270,10 @@ void  plyToMass (Model_PLY  & model, world & wrld)
 			a.v_n[j].v[Y] = model.faces_out[i].normals[j].y;
 			a.v_n[j].v[Z] = model.faces_out[i].normals[j].z;
 		}
-		a.specular = 0.3;
+		a.specular = 0.5;
+		a.mat_refraction = 0.9;
+		//a.refraction = 0.9;
+		a.diffuse = 0.1;
 		/*triangle a = triangle (model.Faces_Triangles[tr] * 200, 
 			model.Faces_Triangles[tr + 1] * 200, 
 			model.Faces_Triangles[tr + 2] * 200, Vec (inten, inten, inten), 0);

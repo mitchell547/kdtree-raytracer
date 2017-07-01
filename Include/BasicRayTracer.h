@@ -48,6 +48,25 @@ inline   Ray reflect (const Ray & r,const  triangle & obj,const Vec & hit, const
 	return reflect;
 }
 
+inline   Ray refract (const Ray & r,const  triangle & obj,const Vec & hit, const Vec & bari) {
+	float3 normal = smoothNormal(obj.v_n, bari);
+	float3 inv_norm = normal.inv();
+	float eta = 1.0f/obj.mat_refraction; 
+	float cos_theta = -inv_norm.dot(r.d);
+	if(cos_theta < 0)
+	{
+		cos_theta *= -1.0f;
+		inv_norm = inv_norm * -1.0f;
+		eta = 1.0f/eta;
+	}
+	float k = 1.0f - eta*eta*(1.0-cos_theta*cos_theta);
+	float3 ref_dir;
+	if(k >= 0.0f)
+		ref_dir = (eta * r.d+ (eta*cos_theta - sqrt(k))*inv_norm).norm();
+	Ray refract = Ray(hit + ref_dir * 0.01, ref_dir);
+	return refract;
+}
+
 // Поиск пересечений луча с треугольниками сцены
 inline   bool findIntersection (const triangle objects[], const unsigned int objCount,
 	const Ray &r, double &t, int &id, float3 & hit, float3 & bari)
@@ -166,7 +185,14 @@ Vec RayTrace (const  world  & wrld,const Ray & ray,unsigned int deep) {
 		Ray reflRay = reflect (ray, tr, hit, bari);
 		color = color*(1.0 - tr.reflect) + RayTrace (wrld, reflRay, deep-1)*tr.reflect;
 	}
-	//color += calculateLighting(wrld, ray hit, id, bari);
+
+	if (tr.refraction > 0 && deep > 0) {
+		Ray refrRay = refract(ray, tr, hit, bari);
+		if (refrRay.d.v[0] != 0 && refrRay.d.v[1] != 0 && refrRay.d.v[2] != 0)
+			color = color*(1.0 - tr.refraction) + RayTrace(wrld, refrRay, deep-1)*tr.refraction;
+	}
+
+	
 	return color;
 }
 

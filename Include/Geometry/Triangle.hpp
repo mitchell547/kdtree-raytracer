@@ -18,8 +18,7 @@ struct triangle
 	float3 o;
 	float rad;	
 
-	//double difra; 
-	//double reflect;
+	float mat_refraction;
 	float diffuse, specular, reflect, refraction;
 
 	inline   triangle (float3 a1_, float3 a2_, float3 a3_, float3 c_, double reflect_) : c (c_), reflect (reflect_) {
@@ -29,6 +28,8 @@ struct triangle
 		_normal = ((p[1] - p[0]).cross(p[2] - p[0])).norm();
 		diffuse = 0.7;
 		specular = 0;
+		mat_refraction = 1;
+		refraction = 0;
 		for (int v = 0; v < 3; ++v)
 			v_n[v] = _normal;
 		//makeMinimumBoundingSphere (p[0], p[1], p[2]);
@@ -41,6 +42,8 @@ struct triangle
 		_normal = ((p[1] - p[0]).cross(p[2] - p[0])).norm();
 		diffuse = 0.7;
 		specular = 0;
+		mat_refraction = 1;
+		refraction = 0;
 		for (int v = 0; v < 3; ++v)
 			v_n[v] = _normal;
 		//makeMinimumBoundingSphere (p[0], p[1], p[2]);
