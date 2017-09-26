@@ -27,6 +27,7 @@
     <ClInclude Include="Include\Misc\OBJ.hpp" />
     <ClInclude Include="Include\Misc\Ply.hpp" />
     <ClInclude Include="Include\raytracer_misc.h" />
+    <ClInclude Include="Include\scene_samples.h" />
     <ClInclude Include="Include\World.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

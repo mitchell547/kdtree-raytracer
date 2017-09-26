@@ -7,6 +7,7 @@
 * Just the class for loading PLY files.
 *
 */
+#pragma once
 
 #include <windows.h>
 #include <stdio.h>
